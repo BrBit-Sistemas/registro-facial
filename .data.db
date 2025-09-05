@@ -1,0 +1,137 @@
+CREATE TABLE usuarios (
+    ID SERIAL PRIMARY KEY,
+    Data_Cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Nome VARCHAR(100) NOT NULL,
+    Sobrenome VARCHAR(100) NOT NULL,
+    Email VARCHAR(150) UNIQUE NOT NULL,
+    Senha VARCHAR(255) NOT NULL,
+    ID_CPMA_UNIDADE VARCHAR(200),
+    Status VARCHAR(20) DEFAULT 'Ativo'
+);
+
+-- Criação de índices para melhor performance
+CREATE INDEX idx_usuarios_email ON usuarios(Email);
+CREATE INDEX idx_usuarios_status ON usuarios(Status);
+CREATE INDEX idx_usuarios_nome_sobrenome ON usuarios(Nome, Sobrenome);
+
+-- Opcional: Adicionar comentários nas colunas
+COMMENT ON TABLE usuarios IS 'Tabela de usuários do sistema';
+COMMENT ON COLUMN usuarios.Email IS 'E-mail do usuário (deve ser único)';
+COMMENT ON COLUMN usuarios.Senha IS 'Senha criptografada do usuário';
+COMMENT ON COLUMN usuarios.Status IS 'Status do usuário: Ativo, Inativo, Bloqueado, etc.';
+
+////////////////////////////////////////////////////////////////////////////////////////////
+
+CREATE TABLE pessoas (
+    ID SERIAL PRIMARY KEY,
+    Prontuario VARCHAR(50),
+    Data_Cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Vara VARCHAR(100),
+    Regime_Penal VARCHAR(100),
+    Nome_Completo VARCHAR(200) NOT NULL,
+    Data_Nascimento DATE,
+    RG VARCHAR(20),
+    CPF VARCHAR(14),
+    Sexo CHAR(1),
+    Naturalidade VARCHAR(100),
+    Nacionalidade VARCHAR(100),
+    Nome_Pai VARCHAR(200),
+    Nome_Mae VARCHAR(200),
+    Cidade VARCHAR(100),
+    UF CHAR(2),
+    Contato_1 VARCHAR(50),
+    Contato_2 VARCHAR(50),
+    Processo VARCHAR(100),
+    Motivo_Encerramento TEXT,
+    Dados_Adicionais TEXT,
+    Foto BYTEA,
+    ID_Facial VARCHAR(100),
+    ID_CPMA_UNIDADE VARCHAR(200),
+    Status VARCHAR(50) DEFAULT 'Ativo'
+);
+
+-- Criação de índices para melhor performance
+CREATE INDEX idx_pessoas_prontuario ON pessoas(Prontuario);
+CREATE INDEX idx_pessoas_cpf ON pessoas(CPF);
+CREATE INDEX idx_pessoas_nome ON pessoas(Nome_Completo);
+CREATE INDEX idx_pessoas_status ON pessoas(Status);
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+CREATE TABLE empresa (
+    ID SERIAL PRIMARY KEY,
+    Data_Cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Razao_Social VARCHAR(200) NOT NULL,
+    CNPJ VARCHAR(18) UNIQUE NOT NULL,
+    Inscricao_Estadual VARCHAR(20),
+    Endereco VARCHAR(200),
+    Complemento VARCHAR(100),
+    Bairro VARCHAR(100),
+    Ponto_Referencia VARCHAR(200),
+    Cidade VARCHAR(100),
+    UF CHAR(2),
+    Contato VARCHAR(50),
+    Email VARCHAR(150),
+    Site VARCHAR(200),
+    Dados_Adicionais TEXT
+);
+
+-- Criação de índices para melhor performance
+CREATE INDEX idx_empresa_cnpj ON empresa(CNPJ);
+CREATE INDEX idx_empresa_razao_social ON empresa(Razao_Social);
+CREATE INDEX idx_empresa_cidade_uf ON empresa(Cidade, UF);
+CREATE INDEX idx_empresa_email ON empresa(Email);
+
+-- Opcional: Adicionar comentários nas colunas
+COMMENT ON TABLE empresa IS 'Tabela de cadastro de empresas';
+COMMENT ON COLUMN empresa.CNPJ IS 'CNPJ da empresa (deve ser único)';
+COMMENT ON COLUMN empresa.Inscricao_Estadual IS 'Inscrição Estadual (isenta se não houver)';
+COMMENT ON COLUMN empresa.UF IS 'Unidade Federativa (2 caracteres)';
+
+-- Campos adicionais que podem ser úteis
+ALTER TABLE empresa ADD COLUMN Telefone VARCHAR(20);
+ALTER TABLE empresa ADD COLUMN Celular VARCHAR(20);
+ALTER TABLE empresa ADD COLUMN CEP VARCHAR(9);
+ALTER TABLE empresa ADD COLUMN Responsavel VARCHAR(200);
+ALTER TABLE empresa ADD COLUMN Status VARCHAR(20) DEFAULT 'Ativa';
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+CREATE TABLE historico_ocorrencias (
+    ID SERIAL PRIMARY KEY,
+    Prontuario VARCHAR(50) NOT NULL,
+    Tipo VARCHAR(100) NOT NULL,
+    Data DATE NOT NULL,
+    Hora TIME NOT NULL,
+    Historico TEXT NOT NULL,
+    Anexo_Arquivo BYTEA,
+    Data_Cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Usuario_Cadastro VARCHAR(100)
+);
+
+-- Criação de índices para melhor performance
+CREATE INDEX idx_historico_prontuario ON historico_ocorrencias(Prontuario);
+CREATE INDEX idx_historico_data ON historico_ocorrencias(Data);
+CREATE INDEX idx_historico_tipo ON historico_ocorrencias(Tipo);
+CREATE INDEX idx_historico_data_hora ON historico_ocorrencias(Data, Hora);
+
+-- Opcional: Adicionar chave estrangeira para a tabela pessoas
+ALTER TABLE historico_ocorrencias 
+ADD CONSTRAINT fk_historico_pessoas 
+FOREIGN KEY (Prontuario) 
+REFERENCES pessoas(Prontuario) 
+ON DELETE CASCADE;
+
+-- Opcional: Adicionar comentários nas colunas
+COMMENT ON TABLE historico_ocorrencias IS 'Tabela de histórico de ocorrências dos pacientes';
+COMMENT ON COLUMN historico_ocorrencias.Prontuario IS 'Número do prontuário relacionado à ocorrência';
+COMMENT ON COLUMN historico_ocorrencias.Tipo IS 'Tipo da ocorrência (Consulta, Incidente, Evolução, etc)';
+COMMENT ON COLUMN historico_ocorrencias.Anexo_Arquivo IS 'Arquivo anexado à ocorrência (formato binário)';
+
+-- Campos adicionais que podem ser úteis
+ALTER TABLE historico_ocorrencias ADD COLUMN Responsavel VARCHAR(200);
+ALTER TABLE historico_ocorrencias ADD COLUMN Severidade VARCHAR(20);
+ALTER TABLE historico_ocorrencias ADD COLUMN Status VARCHAR(20) DEFAULT 'Ativo';
+ALTER TABLE historico_ocorrencias ADD COLUMN Local_Ocorrencia VARCHAR(100);
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////

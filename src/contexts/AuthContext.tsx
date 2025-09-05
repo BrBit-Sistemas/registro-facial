@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
+import { api } from '@/utils/api';
 
 interface User {
   id: string;
@@ -41,19 +41,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     try {
-      // Simulate API call
+      setIsLoading(true);
+      const rest = await api.post('/auth/auth/', { email, password });
+
       await new Promise(resolve => setTimeout(resolve, 1000));
+      setIsLoading(false);
       
       // Mock authentication
-      if (email === 'admin@sagep.com' && password === 'admin123') {
+      if ( rest.data.status === 200) {
         const userData = {
-          id: '1',
-          name: 'Administrador',
-          email: 'admin@sagep.com',
+          id: rest.data.data.numserie,
+          name: rest.data.data.chave,
+          email: rest.data.data.setor,
           role: 'admin'
         };
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
+        
+        localStorage.setItem('token', JSON.stringify(rest.data.token));
+
         toast({
           title: "Login realizado com sucesso",
           description: "Bem-vindo ao SAGEP!",
@@ -74,6 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
     toast({
       title: "Logout realizado",
       description: "Até logo!",
