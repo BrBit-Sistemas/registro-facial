@@ -4,22 +4,27 @@ import axios from 'axios';
 const isDevelopment = import.meta.env.MODE === 'development';
 
 export const api = axios.create({
-  baseURL: isDevelopment ? '/api' : 'http://app.facial.sagep.com.br/api-facil',
+  baseURL: 'https://acthauros.com.br/api/cpma-api/registrations/',
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    // Add token header if exists then Authorization remove Bearer ( space ) token only token 
+    'Authorization': localStorage.getItem('token').replace(/^"|"$/g, ""),
   },
   timeout: 10000,
   validateStatus: (status) => status >= 200 && status < 500,
 });
 
-// Interceptor para adicionar headers específicos em desenvolvimento
-api.interceptors.request.use((config) => {
-  if (isDevelopment) {
-    if (config.headers) {
-      config.headers['Referer'] = 'http://localhost:3000';
-      config.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
-    }
-  }
-  return config;
-});
+// if (isDevelopment) {
+//   api.interceptors.request.use((config) => {
+//     console.log('Request:', config);
+//     return config;
+//   });
+
+//   api.interceptors.response.use((response) => {
+//     console.log('Response:', response);
+//     return response;
+//   }, (error) => {
+//     console.error('Response Error:', error);
+//     return Promise.reject(error);
+//   });
+// }

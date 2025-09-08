@@ -34,6 +34,8 @@ const personSchema = z.object({
   processo: z.string().optional(),
   motivoEncerramento: z.string().optional(),
   dadosAdicionais: z.string().optional(),
+  idFacial: z.string().optional(),
+  tipo_frequencia: z.string().optional(),
 });
 
 type PersonFormData = z.infer<typeof personSchema>;
@@ -49,6 +51,7 @@ const PersonRegister = () => {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const webcamRef = useRef<Webcam>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [idPessao, setIdPessoa] = useState<string | null>(null);
 
   const {
     register,
@@ -64,8 +67,11 @@ const PersonRegister = () => {
     }
   });
 
+  console.log('watch',personToEdit);
+
   useEffect(() => {
     if (editMode && personToEdit) {
+      setIdPessoa(personToEdit.id);
       reset({
         nome: personToEdit.nome,
         cpf: personToEdit.cpf,
@@ -76,8 +82,18 @@ const PersonRegister = () => {
         regime: personToEdit.regime,
         cidade: personToEdit.cidade,
         uf: personToEdit.uf,
+        idFacial: personToEdit.idFacial,
         processo: personToEdit.processo,
-        nacionalidade: 'Brasileira'
+        nacionalidade: personToEdit.nacionalidade,
+        naturalidade: personToEdit.Naturalidade,
+        nomePai: personToEdit.Nome_Pai,
+        nomeMae: personToEdit.Nome_Mae,
+        contato1: personToEdit.Contato_1,
+        contato2: personToEdit.Contato_2,
+        motivoEncerramento: personToEdit.Motivo_Encerramento,
+        dadosAdicionais: personToEdit.Dados_Adicionais,
+        tipo_frequencia: personToEdit.tipo_frequencia,
+
       });
       setIsActive(personToEdit.isActive);
     }
@@ -104,7 +120,7 @@ const PersonRegister = () => {
         // Add new person
         const newPerson = {
           id: Date.now().toString(),
-          idFacial: `FAC-${Date.now()}`,
+          idFacial: `${Date.now()}`,
           ...data,
           isActive,
           dataCadastro: format(new Date(), 'yyyy-MM-dd'),
@@ -215,7 +231,7 @@ const PersonRegister = () => {
                 <Label htmlFor="idFacial">ID Facial</Label>
                 <Input 
                   id="idFacial" 
-                  value={`FAC-${Date.now()}`} 
+                  {...register('idFacial')} 
                   disabled 
                   className="bg-muted"
                 />
@@ -309,9 +325,9 @@ const PersonRegister = () => {
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="masculino">Masculino</SelectItem>
-                    <SelectItem value="feminino">Feminino</SelectItem>
-                    <SelectItem value="outro">Outro</SelectItem>
+                    <SelectItem value="M">Masculino</SelectItem>
+                    <SelectItem value="F">Feminino</SelectItem>
+                    <SelectItem value="O">Outro</SelectItem>
                   </SelectContent>
                 </Select>
                 {errors.sexo && <p className="text-sm text-destructive">{errors.sexo.message}</p>}
@@ -348,9 +364,9 @@ const PersonRegister = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="uf">UF</Label>
-                <Select onValueChange={(value) => setValue('uf', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="UF" />
+                <Select onValueChange={(value) => setValue('uf', value)} >
+                  <SelectTrigger >
+                    <SelectValue placeholder="UF" {...register('uf')}/>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="AC">AC</SelectItem>
@@ -397,9 +413,23 @@ const PersonRegister = () => {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="processo">Processo</Label>
               <Input id="processo" {...register('processo')} />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="tipo_frequencia">Frequência</Label>
+                <Select onValueChange={(value) => setValue('uf', value)} {...register('tipo_frequencia')}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="30	Mensal" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="AC">AC</SelectItem>
+                    <SelectItem value="AL">AL</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-2">

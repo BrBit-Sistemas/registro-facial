@@ -9,14 +9,14 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 3000,
     // Configuração do proxy para evitar CORS
-    proxy: {
-      '/api': {
-        target: 'http://app.facial.sagep.com.br',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '/api-facil'),
-        secure: false,
-      }
-    }
+    // proxy: {
+    //   '/api': {
+    //     target: 'https://acthauros.com.br/api/cpma-api/registrations/',
+    //     changeOrigin: true,
+    //     rewrite: (path) => path.replace(/^\/api/, '/api-facil'),
+    //     secure: false,
+    //   }
+    // }
   },
   plugins: [
     react(),

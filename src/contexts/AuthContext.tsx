@@ -42,23 +42,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      const rest = await api.post('/auth/auth/', { email, password });
+      const rest = await api.post('auth/auth/', { email, password });
 
       await new Promise(resolve => setTimeout(resolve, 1000));
       setIsLoading(false);
       
       // Mock authentication
-      if ( rest.data.status === 200) {
+      if ( rest.status === 200) {
         const userData = {
-          id: rest.data.data.numserie,
-          name: rest.data.data.chave,
-          email: rest.data.data.setor,
+          id: rest.data[0].ID,
+          name: rest.data[0].Nome,
+          email: rest.data[0].Email,
+          time_exp: rest.data[2].exp,
           role: 'admin'
         };
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
+
+        localStorage.setItem('id_cpma_unidade', JSON.stringify(rest.data[0].ID_CPMA_UNIDADE));
         
-        localStorage.setItem('token', JSON.stringify(rest.data.token));
+        localStorage.setItem('token', JSON.stringify(rest.data[1].token));
 
         toast({
           title: "Login realizado com sucesso",
@@ -81,6 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+    localStorage.removeItem('id_cpma_unidade');
     toast({
       title: "Logout realizado",
       description: "Até logo!",
