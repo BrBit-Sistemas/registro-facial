@@ -45,6 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const rest = await api.post('auth/auth/', { email, password });
 
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
       setIsLoading(false);
       
       // Mock authentication

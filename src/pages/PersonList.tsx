@@ -66,9 +66,9 @@ const PersonList = () => {
   const getPessoas = async () => {
     setOpenL(true);
     const rest = await api.get(`pessoas/pessoas-list/${idCompany}/?loc=${searchTerm}`);
-    console.log(rest.data);
-    if ( rest.status === 200) {
-      setPeople(rest.data.map((item: any) => ({
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    if ( rest.data.status === true) {
+      setPeople(rest.data[0].map((item: any) => ({
         id: item.ID,
         idFacial: item.ID_Facial,
         nome: item.Nome_Completo,
@@ -96,7 +96,7 @@ const PersonList = () => {
         Dados_Adicionais: item.Dados_Adicionais,
         Foto: item.Foto
       })));
-      setFilteredPeople(rest.data.map((item: any) => ({
+      setFilteredPeople(rest.data[0].map((item: any) => ({
         id: item.ID,
         idFacial: item.ID_Facial,
         nome: item.Nome_Completo,
@@ -134,15 +134,16 @@ const PersonList = () => {
   }, []);
 
   useEffect(() => {
+    
     const filtered = people.filter(person =>
-      person.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      person.cpf.includes(searchTerm) ||
-      person.idFacial.toLowerCase().includes(searchTerm.toLowerCase())
+      person.nome.toLowerCase().includes(searchTerm.toLowerCase()) 
     );
-    setFilteredPeople(filtered);
+
+    setFilteredPeople(filtered?filtered:[]);
   }, [searchTerm, people]);
 
   const handleEdit = (person: Person) => {
+    console.log("Pessoa para person:", person);
     navigate('/person-register', { state: { person, editMode: true } });
   };
 
@@ -151,17 +152,19 @@ const PersonList = () => {
     setDeleteDialogOpen(true);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!personToDelete) return;
 
-    const updatedPeople = people.filter(p => p.id !== personToDelete.id);
-    setPeople(updatedPeople);
-    localStorage.setItem('people', JSON.stringify(updatedPeople));
+    setOpenL(true);
+    await api.delete(`pessoas/pessoas-list/${personToDelete.id}/`);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setOpenL(false);
     
     toast({
       title: "Pessoa removida",
       description: `${personToDelete.nome} foi removido com sucesso.`,
     });
+    getPessoas();
     
     setDeleteDialogOpen(false);
     setPersonToDelete(null);
@@ -185,6 +188,7 @@ const PersonList = () => {
   };
 
   return (
+    <>
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
@@ -194,7 +198,7 @@ const PersonList = () => {
         <Button 
           onClick={() => navigate('/person-register')}
           className="bg-gradient-primary hover:opacity-90"
-        >
+          >
           <Plus className="h-4 w-4 mr-2" />
           Nova Pessoa
         </Button>
@@ -212,11 +216,11 @@ const PersonList = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nome, CPF ou ID Facial..."
+                placeholder="Buscar por nome..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
-              />
+                />
             </div>
           </div>
 
@@ -271,7 +275,7 @@ const PersonList = () => {
                             size="sm"
                             variant="outline"
                             onClick={() => handleEdit(person)}
-                          >
+                            >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
@@ -279,7 +283,7 @@ const PersonList = () => {
                             variant="outline"
                             onClick={() => confirmDelete(person)}
                             className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                          >
+                            >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -307,19 +311,20 @@ const PersonList = () => {
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+              >
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
       <Backdrop
           sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 5}}
           open={openL}
-      >
+          >
           <CircularProgress color="inherit" /> Carregando...
       </Backdrop>
-    </div>
+    </>
   );
 };
 

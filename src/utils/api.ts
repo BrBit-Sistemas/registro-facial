@@ -1,30 +1,31 @@
-// src/utils/api.ts
 import axios from 'axios';
 
-const isDevelopment = import.meta.env.MODE === 'development';
+//const isDevelopment = import.meta.env.MODE === 'development';
+//const url = 'https://acthauros.com.br/api/cpma-api/registrations/';
+const url = import.meta.env.VITE_APP_BASE_URL || 'http://localhost';
 
+// Safely get token from localStorage and remove quotes if present
+const rawToken = localStorage?.getItem('token');
+const token = rawToken ? rawToken.replace(/^"|"$/g, "") : import.meta.env.VITE_APP_KEY;
+
+// Create an Axios instance with default configuration
 export const api = axios.create({
-  baseURL: 'https://acthauros.com.br/api/cpma-api/registrations/',
+  baseURL: url,
   headers: {
     'Content-Type': 'application/json',
     // Add token header if exists then Authorization remove Bearer ( space ) token only token 
-    'Authorization': localStorage.getItem('token').replace(/^"|"$/g, ""),
+    'Authorization': token ? `${token}` : '',
   },
   timeout: 10000,
   validateStatus: (status) => status >= 200 && status < 500,
 });
 
-// if (isDevelopment) {
-//   api.interceptors.request.use((config) => {
-//     console.log('Request:', config);
-//     return config;
-//   });
-
-//   api.interceptors.response.use((response) => {
-//     console.log('Response:', response);
-//     return response;
-//   }, (error) => {
-//     console.error('Response Error:', error);
-//     return Promise.reject(error);
-//   });
-// }
+// Create an Axios instance with default configuration
+export const apiTokenNull = axios.create({
+  baseURL: url,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 10000,
+  validateStatus: (status) => status >= 200 && status < 500,
+});
