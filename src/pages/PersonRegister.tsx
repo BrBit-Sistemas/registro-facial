@@ -365,6 +365,7 @@ const PersonRegister = () => {
   };
 
  async function adicionarUsuario() {
+    const nome = watch('nome') || personToEdit?.nome;
     try {
         const response = await fetch('http://localhost:8081/SagepFRA/tasks.php', {
             method: 'POST',
@@ -374,8 +375,8 @@ const PersonRegister = () => {
             body: JSON.stringify({
                 "OPTION": "USUARIO_ADICIONAR",
                 "DADOS": {
-                    "FACE_ID": "1425",
-                    "NOME": "WIlson"
+                    "FACE_ID": watch('idFacial') || personToEdit?.idFacial,
+                    "NOME": nome.split(' ').join('%20'),
                 }
             }),
             // Adiciona credentials se necessário
@@ -383,20 +384,93 @@ const PersonRegister = () => {
         });
 
         if (!response.ok) {
+            setOpenL(false);
             throw new Error(`Erro no servidor: ${response.status}`);
         }
 
-        const resultado = await response.json();
+        const resultado = response;
         return resultado;
         
     } catch (error) {
+        setOpenL(false);
         console.error('Falha na requisição:', error);
         throw error;
     }
-}
+  }
 
+   async function adicionarFotoUsuario() {
+    try {
+        const response = await fetch('http://localhost:8081/SagepFRA/tasks.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                "OPTION": "FOTO_ATUALIZAR",
+                "DADOS": {
+                    "FACE_ID": watch('idFacial') || personToEdit?.idFacial,
+                    "BASE64": capturedImage.replace(/^data:image\/\w+;base64,/, '')
+                }
+            }),
+            // Adiciona credentials se necessário
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            setOpenL(false);
+            throw new Error(`Erro no servidor: ${response.status}`);
+        }
+
+        const resultado = response;
+        return resultado;
+        
+    } catch (error) {
+        setOpenL(false);
+        console.error('Falha na requisição:', error);
+        throw error;
+    }
+  }
+
+  async function liberarUsuario() {
+    try {
+        const response = await fetch('http://localhost:8081/SagepFRA/tasks.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                "OPTION": "LIBERAR"
+            }),
+            // Adiciona credentials se necessário
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            setOpenL(false);
+            throw new Error(`Erro no servidor: ${response.status}`);
+        }
+
+        const resultado = response;
+        return resultado;
+        
+    } catch (error) {
+        setOpenL(false);
+        console.error('Falha na requisição:', error);
+        throw error;
+    }
+  }
 
   const sendToFacialReader = async() => {
+ 
+    if(!watch('idFacial') && !personToEdit?.idFacial) {
+      toast({
+        title: "Erro",
+        description: "Salve o cadastro para gerar um ID Facial antes de enviar a foto",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setOpenL(true);
     if (!capturedImage) {
       setOpenL(false);
@@ -407,15 +481,14 @@ const PersonRegister = () => {
       });
       return;
     }
-    // Simula o envio da imagem para o leitor facial
-    setTimeout(async() => {
-      adicionarUsuario().then(data => console.log(data)).catch(error => console.error(error));
+     await adicionarUsuario();
+     await adicionarFotoUsuario();
+     await liberarUsuario();
       setOpenL(false);
       toast({
         title: "Enviado",
         description: "Foto enviada para o leitor facial com sucesso!",
       });
-    }, 2000);
     toast({
       title: "Enviando...",
       description: "Dados enviados para o leitor facial",
