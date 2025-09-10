@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
+import { api } from '@/utils/api';
 
 interface User {
   id: string;
@@ -41,19 +41,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     try {
-      // Simulate API call
+      setIsLoading(true);
+      const rest = await api.post('auth/auth/', { email, password });
+
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      setIsLoading(false);
+      
       // Mock authentication
-      if (email === 'admin@sagep.com' && password === 'admin123') {
+      if ( rest.status === 200) {
         const userData = {
-          id: '1',
-          name: 'Administrador',
-          email: 'admin@sagep.com',
+          id: rest.data[0].ID,
+          name: rest.data[0].Nome,
+          email: rest.data[0].Email,
+          time_exp: rest.data[2].exp,
           role: 'admin'
         };
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
+
+        localStorage.setItem('id_cpma_unidade', JSON.stringify(rest.data[0].ID_CPMA_UNIDADE));
+        
+        localStorage.setItem('token', JSON.stringify(rest.data[1].token));
+
         toast({
           title: "Login realizado com sucesso",
           description: "Bem-vindo ao SAGEP!",
@@ -74,6 +84,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('id_cpma_unidade');
     toast({
       title: "Logout realizado",
       description: "Até logo!",

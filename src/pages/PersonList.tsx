@@ -5,9 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Edit, Trash2, User } from 'lucide-react';
+import { Plus, Search, Edit, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { api } from '@/utils/api';
 
 interface Person {
   id: string;
@@ -35,62 +38,19 @@ interface Person {
   isActive: boolean;
   dataCadastro: string;
   hasPhoto: boolean;
+  Prontuario: string;
+  Naturalidade: string;
+  Nacionalidade: string;
+  Nome_Pai: string;
+  Nome_Mae: string;
+  Contato_1: string;
+  Contato_2: string;
+  tipo_frequencia: string;
+  Motivo_Encerramento: string;
+  Dados_Adicionais: string;
+  Foto: string;
 }
 
-// Mock data - replace with actual API calls
-const mockPeople: Person[] = [
-  {
-    id: '1',
-    idFacial: 'FAC-001',
-    nome: 'João Silva Santos',
-    cpf: '12345678901',
-    rg: 'MG1234567',
-    dataNascimento: '1985-03-15',
-    sexo: 'masculino',
-    vara: '1ª Vara Criminal',
-    regime: 'Regime Aberto',
-    cidade: 'Belo Horizonte',
-    uf: 'MG',
-    processo: 'PROC-2024-001',
-    isActive: true,
-    dataCadastro: '2024-01-15',
-    hasPhoto: true
-  },
-  {
-    id: '2',
-    idFacial: 'FAC-002',
-    nome: 'Maria Oliveira Costa',
-    cpf: '98765432109',
-    rg: 'SP9876543',
-    dataNascimento: '1990-07-22',
-    sexo: 'feminino',
-    vara: '2ª Vara Criminal',
-    regime: 'Regime Semiaberto',
-    cidade: 'São Paulo',
-    uf: 'SP',
-    processo: 'PROC-2024-002',
-    isActive: true,
-    dataCadastro: '2024-01-20',
-    hasPhoto: false
-  },
-  {
-    id: '3',
-    idFacial: 'FAC-003',
-    nome: 'Pedro Henrique Almeida',
-    cpf: '45678912345',
-    rg: 'RJ4567891',
-    dataNascimento: '1978-11-30',
-    sexo: 'masculino',
-    vara: 'Vara de Execuções Penais',
-    regime: 'Regime Fechado',
-    cidade: 'Rio de Janeiro',
-    uf: 'RJ',
-    processo: 'PROC-2023-150',
-    isActive: false,
-    dataCadastro: '2023-12-10',
-    hasPhoto: true
-  }
-];
 
 const PersonList = () => {
   const navigate = useNavigate();
@@ -99,28 +59,91 @@ const PersonList = () => {
   const [filteredPeople, setFilteredPeople] = useState<Person[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [personToDelete, setPersonToDelete] = useState<Person | null>(null);
+  const idCompany = localStorage.getItem('id_cpma_unidade').replace(/^"|"$/g, "");
+  const [openL, setOpenL] = useState(false);
+
+
+  const getPessoas = async () => {
+    setOpenL(true);
+    const rest = await api.get(`pessoas/pessoas-list/${idCompany}/?loc=${searchTerm}`);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    if ( rest.data.status === true) {
+      setPeople(rest.data[0].map((item: any) => ({
+        id: item.ID,
+        idFacial: item.ID_Facial,
+        nome: item.Nome_Completo,
+        cpf: item.CPF,
+        rg: item.RG,
+        dataNascimento: item.Data_Nascimento,
+        sexo: item.Sexo,
+        vara: item.Vara,  
+        regime: item.Regime_Penal,
+        cidade: item.Cidade,
+        uf: item.UF,
+        processo: item.Processo,
+        isActive: item.Status === "Ativo" ? true : false,
+        dataCadastro: item.Data_Cadastro,
+        hasPhoto: item.Foto ? true : false,
+        Prontuario: item.Prontuario,
+        Naturalidade: item.Naturalidade,
+        Nacionalidade: item.Nacionalidade,
+        Nome_Pai: item.Nome_Pai,
+        Nome_Mae: item.Nome_Mae,
+        Contato_1: item.Contato_1,
+        Contato_2: item.Contato_2,
+        tipo_frequencia: item.tipo_frequencia,
+        Motivo_Encerramento: item.Motivo_Encerramento,
+        Dados_Adicionais: item.Dados_Adicionais,
+        Foto: item.Foto
+      })));
+      setFilteredPeople(rest.data[0].map((item: any) => ({
+        id: item.ID,
+        idFacial: item.ID_Facial,
+        nome: item.Nome_Completo,
+        cpf: item.CPF,
+        rg: item.RG,
+        dataNascimento: item.Data_Nascimento,
+        sexo: item.Sexo,
+        vara: item.Vara,  
+        regime: item.Regime_Penal,
+        cidade: item.Cidade,
+        uf: item.UF,
+        processo: item.Processo,
+        isActive: item.Status === "Ativo" ? true : false,
+        dataCadastro: item.Data_Cadastro,
+        hasPhoto: item.Foto ? true : false,
+        Prontuario: item.Prontuario,
+        Naturalidade: item.Naturalidade,
+        Nacionalidade: item.Nacionalidade,
+        Nome_Pai: item.Nome_Pai,
+        Nome_Mae: item.Nome_Mae,
+        Contato_1: item.Contato_1,
+        Contato_2: item.Contato_2,
+        tipo_frequencia: item.tipo_frequencia,
+        Motivo_Encerramento: item.Motivo_Encerramento,
+        Dados_Adicionais: item.Dados_Adicionais,
+        Foto: item.Foto
+      })));
+      setOpenL(false);
+    }
+      setOpenL(false);
+  };
 
   useEffect(() => {
-    // Load people from localStorage or use mock data
-    const storedPeople = localStorage.getItem('people');
-    if (storedPeople) {
-      setPeople(JSON.parse(storedPeople));
-    } else {
-      setPeople(mockPeople);
-      localStorage.setItem('people', JSON.stringify(mockPeople));
-    }
+    getPessoas();
   }, []);
 
   useEffect(() => {
+    
     const filtered = people.filter(person =>
-      person.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      person.cpf.includes(searchTerm) ||
-      person.idFacial.toLowerCase().includes(searchTerm.toLowerCase())
+      person.nome.toLowerCase().includes(searchTerm.toLowerCase()) 
     );
-    setFilteredPeople(filtered);
+
+    setFilteredPeople(filtered?filtered:[]);
   }, [searchTerm, people]);
 
   const handleEdit = (person: Person) => {
+    console.log("Pessoa para person:", person);
     navigate('/person-register', { state: { person, editMode: true } });
   };
 
@@ -129,17 +152,19 @@ const PersonList = () => {
     setDeleteDialogOpen(true);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!personToDelete) return;
 
-    const updatedPeople = people.filter(p => p.id !== personToDelete.id);
-    setPeople(updatedPeople);
-    localStorage.setItem('people', JSON.stringify(updatedPeople));
+    setOpenL(true);
+    await api.delete(`pessoas/pessoas-list/${personToDelete.id}/`);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setOpenL(false);
     
     toast({
       title: "Pessoa removida",
       description: `${personToDelete.nome} foi removido com sucesso.`,
     });
+    getPessoas();
     
     setDeleteDialogOpen(false);
     setPersonToDelete(null);
@@ -151,11 +176,11 @@ const PersonList = () => {
 
   const getRegimeVariant = (regime: string) => {
     switch (regime.toLowerCase()) {
-      case 'regime aberto':
+      case 'aberto':
         return 'default';
-      case 'regime semiaberto':
+      case 'semiaberto':
         return 'secondary';
-      case 'regime fechado':
+      case 'fechado':
         return 'destructive';
       default:
         return 'outline';
@@ -163,6 +188,7 @@ const PersonList = () => {
   };
 
   return (
+    <>
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
@@ -172,7 +198,7 @@ const PersonList = () => {
         <Button 
           onClick={() => navigate('/person-register')}
           className="bg-gradient-primary hover:opacity-90"
-        >
+          >
           <Plus className="h-4 w-4 mr-2" />
           Nova Pessoa
         </Button>
@@ -190,11 +216,11 @@ const PersonList = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nome, CPF ou ID Facial..."
+                placeholder="Buscar por nome..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
-              />
+                />
             </div>
           </div>
 
@@ -249,7 +275,7 @@ const PersonList = () => {
                             size="sm"
                             variant="outline"
                             onClick={() => handleEdit(person)}
-                          >
+                            >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
@@ -257,7 +283,7 @@ const PersonList = () => {
                             variant="outline"
                             onClick={() => confirmDelete(person)}
                             className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                          >
+                            >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -285,13 +311,20 @@ const PersonList = () => {
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+              >
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
+      <Backdrop
+          sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 5}}
+          open={openL}
+          >
+          <CircularProgress color="inherit" /> Carregando...
+      </Backdrop>
+    </>
   );
 };
 

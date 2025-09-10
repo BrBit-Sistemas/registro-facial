@@ -4,8 +4,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScanFace, Lock, Mail } from 'lucide-react';
+import { 
+  Card, 
+  CardContent, 
+//  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { 
+//  ScanFace, 
+  Lock, 
+  Mail 
+} from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -30,19 +40,7 @@ const Login = () => {
     }
   };
 
-useEffect(() => {
-  const fetchStatus = async () => {
-    try {
-      // ✅ Use URL relativa (proxy do Vite)
-      const response = await fetch('/api/dados');
-      const data = await response.json();
-      console.log(data);
-    } catch (error) {
-      console.error('Error fetching status:', error);
-    }
-  };
-  fetchStatus();
-}, []);
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary to-background p-4 ">
