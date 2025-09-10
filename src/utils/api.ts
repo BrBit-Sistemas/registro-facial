@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 //const isDevelopment = import.meta.env.MODE === 'development';
-//const url = 'https://acthauros.com.br/api/cpma-api/registrations/';
-const url = import.meta.env.VITE_APP_BASE_URL || 'http://localhost';
+const url = 'https://acthauros.com.br/api/cpma-api/registrations/';
+//const url = import.meta.env.VITE_APP_BASE_URL || 'http://localhost';
 
 // Safely get token from localStorage and remove quotes if present
 const rawToken = localStorage?.getItem('token');
@@ -22,7 +22,6 @@ export const api = axios.create({
 
 // Create an Axios instance with default configuration
 export const apiTokenNull = axios.create({
-  baseURL: url,
   headers: {
     'Content-Type': 'application/json',
   },

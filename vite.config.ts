@@ -8,15 +8,6 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 3000,
-    // Configuração do proxy para evitar CORS
-    // proxy: {
-    //   '/api': {
-    //     target: 'https://acthauros.com.br/api/cpma-api/registrations/',
-    //     changeOrigin: true,
-    //     rewrite: (path) => path.replace(/^\/api/, '/api-facil'),
-    //     secure: false,
-    //   }
-    // }
   },
   plugins: [
     react(),

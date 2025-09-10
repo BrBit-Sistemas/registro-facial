@@ -14,7 +14,7 @@ import { Camera, Upload, Send, User, List } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { api } from '@/utils/api';
+import { api, apiTokenNull } from '@/utils/api';
 import { geraStringAleatoria } from '@/utils/geraStringAleatoria';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -364,8 +364,39 @@ const PersonRegister = () => {
     }
   };
 
+ async function adicionarUsuario() {
+    try {
+        const response = await fetch('http://localhost:8081/SagepFRA/tasks.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                "OPTION": "USUARIO_ADICIONAR",
+                "DADOS": {
+                    "FACE_ID": "1425",
+                    "NOME": "WIlson"
+                }
+            }),
+            // Adiciona credentials se necessário
+            credentials: 'include'
+        });
 
-  const sendToFacialReader = () => {
+        if (!response.ok) {
+            throw new Error(`Erro no servidor: ${response.status}`);
+        }
+
+        const resultado = await response.json();
+        return resultado;
+        
+    } catch (error) {
+        console.error('Falha na requisição:', error);
+        throw error;
+    }
+}
+
+
+  const sendToFacialReader = async() => {
     setOpenL(true);
     if (!capturedImage) {
       setOpenL(false);
@@ -377,7 +408,8 @@ const PersonRegister = () => {
       return;
     }
     // Simula o envio da imagem para o leitor facial
-    setTimeout(() => {
+    setTimeout(async() => {
+      adicionarUsuario().then(data => console.log(data)).catch(error => console.error(error));
       setOpenL(false);
       toast({
         title: "Enviado",
