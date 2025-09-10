@@ -55,6 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name: rest.data[0].Nome,
           email: rest.data[0].Email,
           time_exp: rest.data[2].exp,
+          service_ip: rest.data[0].service_ip,
           role: 'admin'
         };
         setUser(userData);

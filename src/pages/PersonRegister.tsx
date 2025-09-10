@@ -154,6 +154,7 @@ const PersonRegister = () => {
   const webcamRef = useRef<Webcam>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [openL, setOpenL] = useState(false);
+  const service_ip = JSON.parse(localStorage.getItem('user') || '{}').service_ip;
 
   const {
     register,
@@ -367,7 +368,7 @@ const PersonRegister = () => {
  async function adicionarUsuario() {
     const nome = watch('nome') || personToEdit?.nome;
     try {
-        const response = await fetch('http://localhost:8081/SagepFRA/tasks.php', {
+        const response = await fetch(service_ip+'/SagepFRA/tasks.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -400,7 +401,7 @@ const PersonRegister = () => {
 
    async function adicionarFotoUsuario() {
     try {
-        const response = await fetch('http://localhost:8081/SagepFRA/tasks.php', {
+        const response = await fetch(service_ip+'/SagepFRA/tasks.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -433,7 +434,7 @@ const PersonRegister = () => {
 
   async function liberarUsuario() {
     try {
-        const response = await fetch('http://localhost:8081/SagepFRA/tasks.php', {
+        const response = await fetch(service_ip+'/SagepFRA/tasks.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
