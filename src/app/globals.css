@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+:root {
+    --background: 220 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 158 64% 52%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 221 83% 53%;
+    --radius: .5rem;
+    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(221 83% 63%));
+    --gradient-secondary: linear-gradient(135deg, hsl(220 40% 98%), hsl(220 14% 96%));
+    --gradient-dark: linear-gradient(135deg, hsl(222 47% 11%), hsl(222 47% 21%));
+    --gradient-accent: linear-gradient(135deg, hsl(158 64% 52%), hsl(158 64% 42%));
+    --shadow-sm: 0 1px 2px 0 hsl(222 47% 11% / .05);
+    --shadow-md: 0 4px 6px -1px hsl(222 47% 11% / .1);
+    --shadow-lg: 0 10px 15px -3px hsl(222 47% 11% / .1);
+    --shadow-xl: 0 20px 25px -5px hsl(222 47% 11% / .1);
+    --transition-base: .15s 
+cubic-bezier(.4, 0, .2, 1);
+    --transition-smooth: .3s 
+cubic-bezier(.4, 0, .2, 1);
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 47% 16%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 222 47% 21%;
+    --sidebar-ring: 221 83% 53%;
+}
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer utilities {
+  /* Gradient backgrounds */
+  .bg-gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .bg-gradient-secondary {
+    background: var(--gradient-secondary);
+  }
+  
+  .bg-gradient-dark {
+    background: var(--gradient-dark);
+  }
+  
+  .bg-gradient-accent {
+    background: var(--gradient-accent);
+  }
+
+  /* Custom shadows */
+  .shadow-custom-sm {
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .shadow-custom-md {
+    box-shadow: var(--shadow-md);
+  }
+  
+  .shadow-custom-lg {
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .shadow-custom-xl {
+    box-shadow: var(--shadow-xl);
+  }
+
+  /* Transition utilities */
+  .transition-base {
+    transition: all var(--transition-base);
+  }
+  
+  .transition-smooth {
+    transition: all var(--transition-smooth);
+  }
+}
