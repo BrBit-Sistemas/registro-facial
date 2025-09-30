@@ -32,7 +32,11 @@ export async function POST(request: Request) {
 
     const token = generateToken(user.id);
     return NextResponse.json({token, company: restCompany, user: restUser }, { status: 200 });
-  } catch {
-    return NextResponse.json({ error: 'Login failed' }, { status: 500 });
+  } catch (error) {
+    console.error('Erro no login:', error);
+    return NextResponse.json({ 
+      error: 'Login failed', 
+      details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined 
+    }, { status: 500 });
   }
 }
