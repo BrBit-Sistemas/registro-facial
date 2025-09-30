@@ -407,7 +407,9 @@ curl -X POST -H "Authorization: Bearer SEU_TOKEN" \
 - **Status**: Verificar se container está rodando
 
 ### 📚 **Documentação Completa**
-Consulte o arquivo `DEPLOYMENT.md` para instruções detalhadas de deployment, troubleshooting e manutenção.
+- **`DEPLOYMENT.md`**: Instruções detalhadas de deployment Docker
+- **`RAILWAY_DEPLOYMENT.md`**: Guia específico para deployment no Railway
+- **`RAILWAY_TROUBLESHOOTING.md`**: Soluções para problemas do Railway
 
 ## 📝 **Próximos Passos**
 
@@ -418,6 +420,10 @@ Consulte o arquivo `DEPLOYMENT.md` para instruções detalhadas de deployment, t
 - [x] ✅ Criar documentação de deployment
 - [x] ✅ Corrigir problemas de build Docker
 - [x] ✅ Testar deployment completo
+- [x] ✅ Configurar Railway com Dockerfile específico
+- [x] ✅ Criar endpoints de debug para Railway
+- [x] ✅ Corrigir problema da logo no Railway
+- [ ] 🔄 Corrigir autenticação do banco no Railway
 - [ ] Implementar testes unitários
 - [ ] Adicionar documentação da API
 - [ ] Implementar cache de dados
@@ -439,6 +445,10 @@ Consulte o arquivo `DEPLOYMENT.md` para instruções detalhadas de deployment, t
 - ✅ **Deployment**: Documentação e scripts prontos
 - ✅ **Tailwind CSS**: Versão estável v3.4.0
 - ✅ **Health Check**: Endpoint funcionando
+- ✅ **Railway Config**: Dockerfile específico criado
+- ✅ **Debug Endpoints**: `/api/debug` e `/api/test-db` criados
+- ✅ **Logo Fix**: Pasta public copiada no Docker
+- 🔄 **Railway DB**: Aguardando configuração correta das variáveis
 
 ---
 
