@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import Webcam from 'react-webcam'
 import imageCompression from 'browser-image-compression'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -18,6 +17,7 @@ import {
 } from '@/components/ui/card'
 import { Camera, Upload } from 'lucide-react'
 import { toast } from 'sonner'
+import Image from 'next/image'
 import { AnimatedButton } from '../ui/animated-button'
 import { motion } from 'framer-motion'
 
@@ -241,7 +241,7 @@ export default function PessoaForm() {
           {capturedImage && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="mt-4 flex justify-center">
               <div className="w-full max-w-xs sm:max-w-sm md:max-w-md aspect-square relative rounded-lg overflow-hidden">
-                <img src={capturedImage} alt="Preview" className="object-cover w-full h-full" />
+                <Image src={capturedImage} alt="Preview" width={400} height={400} className="object-cover w-full h-full" />
               </div>
             </motion.div>
           )}

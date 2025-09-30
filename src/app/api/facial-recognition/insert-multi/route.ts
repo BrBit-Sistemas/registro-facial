@@ -27,13 +27,13 @@ interface RequestData {
 }
 
 // Mock database - na implementação real, isso viria de um banco de dados
-const userDatabase = new Map();
+// const userDatabase = new Map();
 
 class DeviceAPIService {
   private deviceBaseUrl: string;
   private username: string;
   private password: string;
-  private authParams: any = null;
+  private authParams: Record<string, string> | null = null;
   
   constructor() {
     let deviceIp = process.env.DEVICE_API_URL || 'http://localhost:8080';
@@ -55,8 +55,8 @@ class DeviceAPIService {
   }
 
   // Parse do header WWW-Authenticate
-  private parseAuthHeader(authHeader: string): any {
-    const params: any = {};
+  private parseAuthHeader(authHeader: string): Record<string, string> {
+    const params: Record<string, string> = {};
     const matches = authHeader.match(/(\w+)="([^"]+)"/g);
     
     if (matches) {
@@ -70,7 +70,7 @@ class DeviceAPIService {
   }
 
   // Obter parâmetros de autenticação
-  private async getAuthParams(): Promise<any> {
+  private async getAuthParams(): Promise<Record<string, string>> {
     if (this.authParams) return this.authParams;
 
     const testUrl = `${this.deviceBaseUrl}/cgi-bin/AccessUser.cgi?action=count`;
@@ -130,7 +130,7 @@ class DeviceAPIService {
   }
 
   // Método para debug detalhado
-  private debugRequestDetails(url: string, headers: any, body: string): void {
+  private debugRequestDetails(url: string, headers: Record<string, string>, body: string): void {
     console.log('🔍 Request Details:');
     console.log('URL:', url);
     console.log('Method: POST');

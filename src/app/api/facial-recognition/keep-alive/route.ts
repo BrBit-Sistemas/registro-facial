@@ -1,9 +1,9 @@
 // app/api/keep-alive/route.ts
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { writeFile, appendFile, access, constants } from 'fs/promises';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Configurações de fuso horário e formato de data
     const datetimeFormat = 'yyyy-MM-dd HH:mm:ss';
@@ -59,7 +59,7 @@ async function appendToFile(filename: string, content: string): Promise<void> {
   try {
     // Verificar se o arquivo existe
     await access(filename, constants.F_OK);
-  } catch (error) {
+  } catch {
     // Se o arquivo não existir, criar com conteúdo vazio
     await writeFile(filename, '');
   }

@@ -1,6 +1,6 @@
 export default class UrlParamsService {
 
-    public injectUrlParams(urlParams: any): string {
+    public injectUrlParams(urlParams: Record<string, unknown>): string {
 
         if (typeof urlParams !== 'object')
             throw new Error('Invalid URL parameters. Expected an object.')
@@ -11,7 +11,7 @@ export default class UrlParamsService {
               return;
             }else{
 
-              return `${encodeURIComponent(key)}=${encodeURIComponent(urlParams[key])}`
+              return `${encodeURIComponent(key)}=${encodeURIComponent(String(urlParams[key]))}`
             }
 
           } )

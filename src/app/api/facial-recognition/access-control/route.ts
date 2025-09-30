@@ -16,7 +16,7 @@ class DeviceAPIService {
   private deviceBaseUrl: string;
   private username: string;
   private password: string;
-  private authParams: any = null;
+  private authParams: Record<string, string> | null = null;
   
   constructor() {
     // Usar IP fixo conforme o código PHP original
@@ -36,8 +36,8 @@ class DeviceAPIService {
   }
 
   // Parse do header WWW-Authenticate
-  private parseAuthHeader(authHeader: string): any {
-    const params: any = {};
+  private parseAuthHeader(authHeader: string): Record<string, string> {
+    const params: Record<string, string> = {};
     const matches = authHeader.match(/(\w+)="([^"]+)"/g);
     
     if (matches) {
@@ -51,7 +51,7 @@ class DeviceAPIService {
   }
 
   // Obter parâmetros de autenticação
-  private async getAuthParams(): Promise<any> {
+  private async getAuthParams(): Promise<Record<string, string>> {
     if (this.authParams) return this.authParams;
 
     const testUrl = `${this.deviceBaseUrl}/cgi-bin/configManager.cgi?action=getConfig&name=SystemInfo`;

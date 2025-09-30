@@ -5,19 +5,28 @@ import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { Toaster } from 'sonner'
 import { isAuthenticated } from '@/shared/helper/auth-handler'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 
 const inter = Inter({ subsets: ['latin'] })
 
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  let router = useRouter();
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(()=>{
-    if(!isAuthenticated()){
+    console.log("=== LAYOUT DEBUG ===");
+    console.log("pathname:", pathname);
+    console.log("isAuthenticated():", isAuthenticated());
+    console.log("sessionStorage token:", sessionStorage.getItem('token'));
+    console.log("===================");
+    
+    // Só redirecionar se não estiver na página de login
+    if(!isAuthenticated() && pathname !== '/login'){
+        console.log("❌ Redirecionando para login");
         router.push('/login');
     }
-  },[])
+  },[router, pathname])
 
   return (
     <html lang="pt-BR" suppressHydrationWarning>

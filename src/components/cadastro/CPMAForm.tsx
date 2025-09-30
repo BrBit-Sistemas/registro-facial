@@ -12,6 +12,7 @@ import { Camera, Upload, Video } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import Webcam from 'react-webcam';
+import Image from 'next/image';
 
 const pessoaSchema = z.object({
   nomeCompleto: z.string().min(2, 'Nome completo é obrigatório'),
@@ -144,7 +145,7 @@ export default function PessoaForm() {
             {capturedImage && (
               <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }} className="mt-4">
                 <div className="w-32 h-32 relative border rounded-lg overflow-hidden">
-                  <img src={capturedImage} alt="Foto capturada" className="w-full h-full object-cover" />
+                  <Image src={capturedImage} alt="Foto capturada" width={128} height={128} className="w-full h-full object-cover" />
                 </div>
               </motion.div>
             )}

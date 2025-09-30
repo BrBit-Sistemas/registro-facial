@@ -21,7 +21,9 @@ import { geraStringAleatoria } from '@/lib/geraStringAleatoria';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import { Person } from "../PersonList/page";
+import { Suspense } from 'react';
 
 const personSchema = z.object({
     nome: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
@@ -146,7 +148,7 @@ function RenderSelect({
     );
 }
 
-export default function PersonRegisterPage() {
+function PersonRegisterContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const personToEdit = useRef<Person>(null);
@@ -158,7 +160,6 @@ export default function PersonRegisterPage() {
     const webcamRef = useRef<Webcam>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [openL, setOpenL] = useState(false);
-    const [serviceIp, setServiceIp] = useState<string>("");
 
     const {
         register,
@@ -210,14 +211,14 @@ export default function PersonRegisterPage() {
             const stored = sessionStorage.getItem("user");
             if (stored) {
             try {
-                const parsed = JSON.parse(stored);
-                setServiceIp(parsed.service_ip || "");
+                // const parsed = JSON.parse(stored);
+                // setServiceIp(parsed.service_ip || "");
             } catch (e) {
                 console.error("Erro ao parsear sessionStorage user:", e);
             }
             }
         }
-    },[]);    
+    },[editMode, watch, setValue, reset]);    
 
     useEffect(() => {
         setOpenL(true);
@@ -250,7 +251,7 @@ export default function PersonRegisterPage() {
         }
         console.log("personToEdit-watch", watch())
         setOpenL(false);
-    }, [reset]);
+    }, [reset, editMode, watch]);
 
 
     const onSubmit = async (data: PersonFormData) => {
@@ -297,11 +298,11 @@ export default function PersonRegisterPage() {
                             description: "Pessoa atualizada com sucesso!",
                         });
                     }
-                }).catch((error) => {
+                }).catch(() => {
                     setOpenL(false);
                     toast({
                         title: "Erro ao cadastrar pessoa",
-                        description: error,
+                        description: "Ocorreu um erro inesperado",
                     });
                     throw new Error('Erro ao cadastrar pessoa');
                 });
@@ -348,17 +349,17 @@ export default function PersonRegisterPage() {
                             description: "Pessoa cadastrada com sucesso!",
                         });
                     }
-                }).catch((error) => {
+                }).catch(() => {
                     setOpenL(false);
                     toast({
                         title: "Erro ao cadastrar pessoa",
-                        description: error,
+                        description: "Ocorreu um erro inesperado",
                     });
                     throw new Error('Erro ao cadastrar pessoa');
                 });
             }
             router.push('/PersonList');
-        } catch (error) {
+        } catch {
             setOpenL(false);
             toast({
                 title: "Erro no cadastro",
@@ -444,10 +445,10 @@ export default function PersonRegisterPage() {
             const resultado = response;
             return resultado;
 
-        } catch (error) {
+        } catch (err) {
             setOpenL(false);
-            console.error('Falha na requisição:', error);
-            throw error;
+            console.error('Falha na requisição:', err);
+            throw err;
         }
     }
 
@@ -486,10 +487,10 @@ export default function PersonRegisterPage() {
             const resultado = response;
             return resultado;
 
-        } catch (error) {
+        } catch (err) {
             setOpenL(false);
-            console.error('Falha na requisição:', error);
-            throw error;
+            console.error('Falha na requisição:', err);
+            throw err;
         }
     }
 
@@ -787,9 +788,11 @@ export default function PersonRegisterPage() {
                             )}
                             {capturedImage && !showWebcam && (
                                 <div className="flex justify-center">
-                                    <img
+                                    <Image
                                         src={capturedImage}
                                         alt="Foto capturada"
+                                        width={400}
+                                        height={300}
                                         className="max-w-md rounded-lg shadow-md"
                                     />
                                 </div>
@@ -826,5 +829,13 @@ export default function PersonRegisterPage() {
                 <CircularProgress color="inherit" /> Carregando...
             </Backdrop>
         </DashboardLayout>
+    );
+}
+
+export default function PersonRegisterPage() {
+    return (
+        <Suspense fallback={<div>Carregando...</div>}>
+            <PersonRegisterContent />
+        </Suspense>
     );
 }

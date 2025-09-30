@@ -31,14 +31,14 @@ const PrivateRoute = ({ children }: Props) => {
            return router.push(routePublic);
         }
         setLoading(false);
-    }, [isUserAuthenticated, router.push, routePublic]);
+    }, [isUserAuthenticated, router, routePublic]);
 
     return (
         <>
         <div suppressHydrationWarning className="min-h-screen flex items-center justify-center" style={{display: loading ? 'flex' : 'none'}}>
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-900"></div>
         </div>
-        {!isUserAuthenticated && children}
+        {isUserAuthenticated && children}
         </>
     )
 };

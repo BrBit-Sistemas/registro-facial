@@ -1,12 +1,12 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { isAuthenticated } from "@/shared/helper/auth-handler";
 import { useRouter, usePathname  } from 'next/navigation'
 import { useEffect } from 'react'
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 import {
   Home,
   Users,
@@ -21,8 +21,7 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronDown,
-  User
+  ChevronDown
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -66,9 +65,9 @@ export default function DashboardLayout({
   useEffect(() => {
     
     if (typeof window !== "undefined") {
-      let useName = JSON.parse(sessionStorage.getItem('user') || '{}').name;
+      const useName = JSON.parse(sessionStorage.getItem('user') || '{}').name;
       setUserAction(useName ? useName : 'Use Name');
-      let useEmail = JSON.parse(sessionStorage.getItem('user') || '{}').email;
+      const useEmail = JSON.parse(sessionStorage.getItem('user') || '{}').email;
       setUserEmail(useEmail ? useEmail : 'Use Email');
     }
   }, [])
@@ -89,7 +88,7 @@ export default function DashboardLayout({
           {/* Logo */}
           <div className="flex h-16 items-center justify-between px-4 bg-gradient-to-br from-background via-secondary to-background border-b border-sidebar-border">
             <div className="h-40 w-40 rounded-full flex items-center justify-center text-primary font-bold">
-              <img src="/logo-1920x570.png" alt="Logo" className="w-100" />
+              <Image src="/logo-1920x570.png" alt="Logo" width={100} height={50} className="w-100" />
             </div>
             <button
               onClick={() => setIsSidebarOpen(false)}

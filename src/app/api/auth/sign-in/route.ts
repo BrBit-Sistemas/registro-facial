@@ -1,5 +1,5 @@
 // app/api/auth/login/route.ts
-import { comparePassword, generateToken, hashPassword } from '@/lib/auth';
+import { comparePassword, generateToken } from '@/lib/auth';
 import pool from '@/lib/db';
 import { NextResponse } from 'next/server';
 //login teste: admin@sagep.com.br / Password: Act@728125
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
 
     const token = generateToken(user.id);
     return NextResponse.json({token, company: restCompany, user: restUser }, { status: 200 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Login failed' }, { status: 500 });
   }
 }

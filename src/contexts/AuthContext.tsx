@@ -30,17 +30,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedUser = sessionStorage.getItem('token');
     if (storedUser) {
       setIsAuthenticated(true);
+    } else {
+      setIsAuthenticated(false);
     }
+    setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
+      console.log("=== LOGIN DEBUG ===");
+      console.log("Tentando login com:", email);
       setIsLoading(true);
       const rest = await api.post('api/auth/sign-in', { 
         email, 
         password
       });
 
+      console.log("Resposta da API:", rest.status, rest.data);
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Mock authentication
@@ -51,6 +57,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: rest.data.user.email,
           role: 'admin'
         };
+        console.log("Dados do usuário:", userData);
+        console.log("Dados da empresa:", rest.data.company);
+        console.log("Token:", rest.data.token);
+        
         setIsAuthenticated(true);
         setUser(userData);
         sessionStorage.setItem('user', JSON.stringify(userData));
@@ -59,22 +69,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         sessionStorage.setItem('token', JSON.stringify(rest.data.token));
 
+        console.log("✅ Login realizado com sucesso");
         setIsLoading(false);
         toast({
           title: "Login realizado com sucesso",
           description: "Bem-vindo ao SAGEP!",
         });
-        setIsLoading(false);
         return true;
       } else {
+        console.log("❌ Login falhou - status:", rest.status);
         setIsAuthenticated(false);
         setIsLoading(false);
         return false;
       }
     } catch (error) {
+      console.log("❌ Erro no login:", error);
       setIsAuthenticated(false);
       setIsLoading(false);
-      console.log(error)
       toast({
         title: "Erro no login",
         description: "Email ou senha incorretos",

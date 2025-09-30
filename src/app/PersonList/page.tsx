@@ -2,13 +2,13 @@
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import Backdrop from '@mui/material/Backdrop';
@@ -16,6 +16,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { useRouter } from 'next/navigation';
 import { request } from "@/services/request-api/request";
 import UrlParamsService from "@/urlParams/UrlParamsService";
+import { isAuthenticated } from "@/shared/helper/auth-handler";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -54,12 +55,40 @@ export interface Person {
     tipo_frequencia: string;
     Motivo_Encerramento: string;
     Dados_Adicionais: string;
-    Foto: string;
+    Foto?: string;
 }
 
 interface ApiResponse<T> {
   data: T;
   status: number;
+}
+
+interface ApiPersonItem {
+  id: string;
+  id_facial: string;
+  nome_completo: string;
+  cpf: string;
+  rg: string;
+  data_nascimento: string;
+  sexo: string;
+  vara: string;
+  regime_penal: string;
+  cidade?: string;
+  uf?: string;
+  processo?: string;
+  status: string;
+  data_cadastro: string;
+  foto?: string;
+  prontuario: string;
+  naturalidade: string;
+  nacionalidade: string;
+  nome_pai: string;
+  nome_mae: string;
+  contato_1: string;
+  contato_2: string;
+  tipo_frequencia: string;
+  motivo_encerramento: string;
+  dados_adicionais: string;
 }
 
 export default function PersonListPage() {
@@ -70,11 +99,23 @@ export default function PersonListPage() {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [personToDelete, setPersonToDelete] = useState<Person | null>(null);
     const idCompany = useRef('');
-    const urlParams = new UrlParamsService();
+    const urlParams = useMemo(() => new UrlParamsService(), []);
 
     const [openL, setOpenL] = useState(false);
 
-    const getPessoas = async () => {
+    const getPessoas = useCallback(async () => {
+        // Verificar se o usuário está autenticado
+        if (!isAuthenticated()) {
+            toast.error("Usuário não autenticado. Redirecionando para login...");
+            router.push('/login');
+            return;
+        }
+        
+        // Verificar se companyId está vazio
+        if (!idCompany.current) {
+            toast.error("ID da empresa não encontrado. Verifique se você está logado corretamente.");
+            return;
+        }
         
         const valueUrl = {
             companyId: idCompany.current,
@@ -85,11 +126,10 @@ export default function PersonListPage() {
         setOpenL(true);
         
         try {
-        const {data, status} = await request.get<ApiResponse<any>>(`api/pessoa${params}`);
-        console.log(data?.data);
+        const {data, status} = await request.get<ApiResponse<ApiPersonItem[]>>(`api/pessoa${params}`);
        // await new Promise(resolve => setTimeout(resolve, 1000));
         if (status === 200) {
-            setPeople(data?.data.map((item: any) => ({
+            setPeople(data?.data.map((item: ApiPersonItem) => ({
                 id: item.id,
                 idFacial: item.id_facial,
                 nome: item.nome_completo,
@@ -117,7 +157,7 @@ export default function PersonListPage() {
                 Dados_Adicionais: item.dados_adicionais,
                 Foto: item.foto
             })));
-            setFilteredPeople(data.data.map((item: any) => ({
+            setFilteredPeople(data.data.map((item: ApiPersonItem) => ({
                 id: item.id,
                 idFacial: item.id_facial,
                 nome: item.nome_completo,
@@ -152,31 +192,48 @@ export default function PersonListPage() {
             setOpenL(false);
             toast.info("Não foi possível encontrar dados!");
         }
-        } catch (e) {
-                console.error("Erro ao parsear idComp:", e);
+        } catch (e: unknown) {
+                console.error("Erro ao buscar pessoas:", e);
                 setOpenL(false);
+                
+                // Se for erro 401, redirecionar para login
+                if (e && typeof e === 'object' && 'response' in e && 
+                    e.response && typeof e.response === 'object' && 
+                    'status' in e.response && e.response.status === 401) {
+                    toast.error("Sessão expirada. Redirecionando para login...");
+                    router.push('/login');
+                    return;
+                }
+                
+                toast.error("Erro ao carregar lista de pessoas");
         }
-    };
+    }, [searchTerm, urlParams, router]);
 
     useEffect(() => {
         if (typeof window !== "undefined") {
-            let cpma = JSON.parse(sessionStorage.getItem('cpma_unidade') || '{}').id
-            const idComp = cpma;
-        if (idComp) {
             try {
-                const parsed = JSON.parse(idComp);
-                idCompany.current = parsed;
-                console.log(parsed);
-            } catch (e) {
-                console.error("Erro ao parsear idComp:", e);
+                const cpmaData = sessionStorage.getItem('cpma_unidade');
+                
+                if (cpmaData) {
+                    const parsed = JSON.parse(cpmaData);
+                    
+                    if (parsed && parsed.id) {
+                        idCompany.current = parsed.id;
+                    } else {
+                        toast.error("Dados da empresa não encontrados. Faça login novamente.");
+                    }
+                } else {
+                    toast.error("Dados da empresa não encontrados. Faça login novamente.");
+                }
+            } catch {
+                toast.error("Erro ao carregar dados da empresa. Faça login novamente.");
             }
         }
-    }
-    },[]); 
+    }, []); 
 
     useEffect(() => {
         getPessoas();
-    }, []);
+    }, [getPessoas]);
 
     useEffect(() => {
 

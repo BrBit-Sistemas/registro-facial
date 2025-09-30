@@ -33,7 +33,7 @@ export function middleware(req: NextRequest) {
 
     // Token válido → segue
     return NextResponse.next();
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Token inválido ou expirado" }, { status: 401 });
   }
 }

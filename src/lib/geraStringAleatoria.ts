@@ -1,8 +1,7 @@
 export function geraStringAleatoria(tamanho: number) {
-  var stringAleatoria = "";
-  var caracteres =
-    "0123456789";
-  for (var i = 0; i < tamanho; i++) {
+  let stringAleatoria = "";
+  const caracteres = "0123456789";
+  for (let i = 0; i < tamanho; i++) {
     stringAleatoria += caracteres.charAt(
       Math.floor(Math.random() * caracteres.length)
     );

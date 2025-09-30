@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { AnimatedButton } from "@/components/ui/animated-button";
@@ -8,12 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { validatorEmail, validatorPassword } from "@/components/utils/validations";
+import Image from 'next/image';
 export default function Login() {
   const [data, setData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { login, logout } = useAuth();
-  let router = useRouter();
+  const { login } = useAuth();
+  const router = useRouter();
   // Validação dos inputs
   const isValidInput = useCallback(() => {
     return validatorEmail(data.email) && validatorPassword(data.password);
@@ -27,9 +28,7 @@ export default function Login() {
     []
   );
 
-  useEffect(() => {
-    logout();
-  }, []);
+  // Removido logout automático que estava causando loop
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -60,9 +59,11 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-secondary to-background p-4">
       <Card className="w-full max-w-md rounded-2xl border border-gray-200 bg-gradient-primary/50 text-card-foreground shadow-xl backdrop-blur-lg">
         <CardHeader className="flex flex-col items-center p-6">
-          <img
+          <Image
             src="/logo-1920x570.png"
             alt="Logo"
+            width={200}
+            height={100}
             className="h-20 w-auto object-contain"
           />
           <CardTitle className="mt-4 text-center text-lg font-semibold">

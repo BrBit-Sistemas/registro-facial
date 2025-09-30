@@ -12,7 +12,7 @@ export default function Home() {
       setLoading(false);
       return router.push('/login');
     }, 3000);
-   },[])
+   },[router])
   return (
         <div suppressHydrationWarning className="min-h-screen flex items-center justify-center" style={{display: loading? "flex": "none"}}>
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>

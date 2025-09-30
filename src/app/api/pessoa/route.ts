@@ -1,10 +1,10 @@
-import { generateToken, verifyToken } from '@/lib/auth';
+import { verifyToken } from '@/lib/auth';
 import pool from '@/lib/db';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
-  const {searchParams } = new URL(request.url);
-  const companyId = searchParams.get('companyId');
+  // const {searchParams } = new URL(request.url);
+  // const companyId = searchParams.get('companyId');
   const authHeader = request.headers.get('authorization') || '';
   
 const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
@@ -20,7 +20,7 @@ const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeade
 
        return NextResponse.json({token, message: "authorization"  }, { status: 200 });
    
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Login failed' }, { status: 500 });
   }
 }
@@ -41,15 +41,19 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { rows } = await pool.query(`SELECT * FROM pessoas WHERE id_cpma_unidade = '${companyId}' and nome_completo like '%${description}%'`);
-    const data = rows[0] === undefined? null : rows;
+    // Verificar se companyId está vazio
+    if (!companyId) {
+      return NextResponse.json({ error: 'Company ID é obrigatório' }, { status: 400 });
+    }
+    
+    const query = `SELECT * FROM pessoas WHERE id_cpma_unidade = $1 and nome_completo like $2`;
+    const { rows } = await pool.query(query, [companyId, `%${description || ''}%`]);
+    const data = rows.length > 0 ? rows : [];
       
-      if (!data) {
-        return NextResponse.json({ error: 'pessoas not found' }, { status: 404 });
-      }
-      return NextResponse.json({ data, message: "List pessoas." }, { status: 200 });
+    return NextResponse.json({ data, message: "List pessoas." }, { status: 200 });
  
     } catch (error) {
-    return NextResponse.json({error: 'Failed to fetch products' }, { status: 500 });
-  }
+      console.error("Erro na query:", error);
+      return NextResponse.json({error: 'Failed to fetch pessoas' }, { status: 500 });
+    }
 }

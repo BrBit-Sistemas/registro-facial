@@ -9,7 +9,7 @@ interface AnimatedButtonProps {
   children: React.ReactNode
   loading?: boolean
   className?: string
-  [key: string]: any // permite passar outras props como onClick, type, etc
+  [key: string]: unknown // permite passar outras props como onClick, type, etc
 }
 
 export function AnimatedButton({ children, loading = false, className, ...props }: AnimatedButtonProps) {
