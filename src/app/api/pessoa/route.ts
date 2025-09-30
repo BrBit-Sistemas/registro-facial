@@ -3,25 +3,75 @@ import pool from '@/lib/db';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
-  // const {searchParams } = new URL(request.url);
-  // const companyId = searchParams.get('companyId');
   const authHeader = request.headers.get('authorization') || '';
   
-const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
   if (!token) {
-    return new Response('Token não fornecido', { status: 401 });
+    return NextResponse.json({ error: 'Token não fornecido' }, { status: 401 });
   }
   
   const decoded = verifyToken(token);
   if (!decoded ||!decoded.userId) {
     return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
   }
-   try{
 
-       return NextResponse.json({token, message: "authorization"  }, { status: 200 });
-   
-  } catch {
-    return NextResponse.json({ error: 'Login failed' }, { status: 500 });
+  try {
+    const body = await request.json();
+    
+    // Mapear os campos do frontend para o banco de dados
+    const insertQuery = `
+      INSERT INTO pessoas (
+        id_facial, nome_completo, cpf, rg, data_nascimento, sexo, vara, 
+        regime_penal, cidade, uf, processo, status, prontuario, naturalidade, 
+        nacionalidade, nome_pai, nome_mae, contato_1, contato_2, tipo_frequencia, 
+        motivo_encerramento, dados_adicionais, foto, id_cpma_unidade, id_usuario
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
+      RETURNING id
+    `;
+    
+    const values = [
+      body.idFacial || `FACIAL_${Date.now()}`,
+      body.Nome,
+      body.CPF,
+      body.RG,
+      body.Data_Nascimento,
+      body.Sexo,
+      body.Vara,
+      body.Regime,
+      body.Cidade,
+      body.UF,
+      body.Processo,
+      body.Status || 'Ativo',
+      body.Prontuario || '',
+      body.Naturalidade,
+      body.Nacionalidade,
+      body.Nome_Pai,
+      body.Nome_Mae,
+      body.Contato_1,
+      body.Contato_2,
+      body.tipo_frequencia,
+      body.Motivo_Encerramento,
+      body.Dados_Adicionais,
+      body.Foto,
+      body.ID_CPMA_UNIDADE,
+      body.ID_usuario
+    ];
+    
+    const result = await pool.query(insertQuery, values);
+    
+    return NextResponse.json({ 
+      status: 1, 
+      message: "Pessoa cadastrada com sucesso!",
+      data: { id: result.rows[0].id }
+    }, { status: 200 });
+    
+  } catch (error) {
+    console.error("Erro ao cadastrar pessoa:", error);
+    return NextResponse.json({ 
+      status: 0, 
+      error: 'Erro ao cadastrar pessoa',
+      message: error instanceof Error ? error.message : 'Erro desconhecido'
+    }, { status: 500 });
   }
 }
 
@@ -56,4 +106,91 @@ export async function GET(request: Request) {
       console.error("Erro na query:", error);
       return NextResponse.json({error: 'Failed to fetch pessoas' }, { status: 500 });
     }
+}
+
+export async function PUT(request: Request) {
+  const authHeader = request.headers.get('authorization') || '';
+  
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+  if (!token) {
+    return NextResponse.json({ error: 'Token não fornecido' }, { status: 401 });
+  }
+  
+  const decoded = verifyToken(token);
+  if (!decoded ||!decoded.userId) {
+    return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+    
+    if (!body.id) {
+      return NextResponse.json({ 
+        status: 0, 
+        error: 'ID da pessoa é obrigatório para edição'
+      }, { status: 400 });
+    }
+    
+    // Mapear os campos do frontend para o banco de dados
+    const updateQuery = `
+      UPDATE pessoas SET 
+        nome_completo = $2, cpf = $3, rg = $4, data_nascimento = $5, sexo = $6, 
+        vara = $7, regime_penal = $8, cidade = $9, uf = $10, processo = $11, 
+        status = $12, prontuario = $13, naturalidade = $14, nacionalidade = $15, 
+        nome_pai = $16, nome_mae = $17, contato_1 = $18, contato_2 = $19, 
+        tipo_frequencia = $20, motivo_encerramento = $21, dados_adicionais = $22, 
+        foto = $23
+      WHERE id = $1
+      RETURNING id
+    `;
+    
+    const values = [
+      body.id,
+      body.Nome,
+      body.CPF,
+      body.RG,
+      body.Data_Nascimento,
+      body.Sexo,
+      body.Vara,
+      body.Regime,
+      body.Cidade,
+      body.UF,
+      body.Processo,
+      body.Status || 'Ativo',
+      body.Prontuario || '',
+      body.Naturalidade,
+      body.Nacionalidade,
+      body.Nome_Pai,
+      body.Nome_Mae,
+      body.Contato_1,
+      body.Contato_2,
+      body.tipo_frequencia,
+      body.Motivo_Encerramento,
+      body.Dados_Adicionais,
+      body.Foto
+    ];
+    
+    const result = await pool.query(updateQuery, values);
+    
+    if (result.rows.length === 0) {
+      return NextResponse.json({ 
+        status: 0, 
+        error: 'Pessoa não encontrada'
+      }, { status: 404 });
+    }
+    
+    return NextResponse.json({ 
+      status: 1, 
+      message: "Pessoa atualizada com sucesso!",
+      data: { id: result.rows[0].id }
+    }, { status: 200 });
+    
+  } catch (error) {
+    console.error("Erro ao atualizar pessoa:", error);
+    return NextResponse.json({ 
+      status: 0, 
+      error: 'Erro ao atualizar pessoa',
+      message: error instanceof Error ? error.message : 'Erro desconhecido'
+    }, { status: 500 });
+  }
 }

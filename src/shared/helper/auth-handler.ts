@@ -27,30 +27,18 @@ export const getToken = () => {
 };
 
 export const isAuthenticated = (): boolean => {
-    if (typeof window === "undefined") {
-        console.log("isAuthenticated: window undefined");
-        return false;
-    }
+    if (typeof window === "undefined") return false;
     
     const token = sessionStorage.getItem(tokenKey);
-    console.log("isAuthenticated: token =", token);
-    
-    if (!token) {
-        console.log("isAuthenticated: no token found");
-        return false;
-    }
+    if (!token) return false;
     
     try {
         // Verificar se o token é válido (não está vazio ou null)
         const parsedToken = JSON.parse(token);
-        const isValid = parsedToken && typeof parsedToken === 'string' && parsedToken.length > 0;
-        console.log("isAuthenticated: parsed token =", parsedToken, "isValid =", isValid);
-        return isValid;
+        return parsedToken && typeof parsedToken === 'string' && parsedToken.length > 0;
     } catch {
         // Se não for JSON, verificar se é uma string válida
-        const isValid = typeof token === 'string' && token.length > 0;
-        console.log("isAuthenticated: token as string, isValid =", isValid);
-        return isValid;
+        return typeof token === 'string' && token.length > 0;
     }
 };
 

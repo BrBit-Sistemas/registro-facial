@@ -245,7 +245,6 @@ export default function PersonListPage() {
     }, [searchTerm, people]);
 
     const handleEdit = (person: Person) => {
-        //router.push('/person-register', { state: { person, editMode: true } });
         sessionStorage.setItem("editingPerson", JSON.stringify(person));
         router.push("/PersonRegister?editMode=true");
     };

@@ -15,15 +15,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
 
   useEffect(()=>{
-    console.log("=== LAYOUT DEBUG ===");
-    console.log("pathname:", pathname);
-    console.log("isAuthenticated():", isAuthenticated());
-    console.log("sessionStorage token:", sessionStorage.getItem('token'));
-    console.log("===================");
-    
     // Só redirecionar se não estiver na página de login
     if(!isAuthenticated() && pathname !== '/login'){
-        console.log("❌ Redirecionando para login");
         router.push('/login');
     }
   },[router, pathname])

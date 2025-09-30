@@ -4,9 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "next build",
+    "build:turbo": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "start:prod": "node server.js",
+    "lint": "eslint",
+    "docker:build": "docker build -t sagep-facial-cpma .",
+    "docker:run": "docker run -p 3000:3000 sagep-facial-cpma"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

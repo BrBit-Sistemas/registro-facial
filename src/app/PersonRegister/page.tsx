@@ -50,17 +50,17 @@ const personSchema = z.object({
 });
 
 const varaList = [
-    { value: '1', label: '1ª Vara Criminal' },
-    { value: '2', label: '2ª Vara Criminal' },
-    { value: '3', label: '3ª Vara Criminal' },
-    { value: '4', label: 'Vara de Execuções Penais' },
+    { value: 'Vara Criminal 1', label: '1ª Vara Criminal' },
+    { value: 'Vara Criminal 2', label: '2ª Vara Criminal' },
+    { value: 'Vara Criminal 3', label: '3ª Vara Criminal' },
+    { value: 'Vara de Execuções Penais', label: 'Vara de Execuções Penais' },
 ];
 
 const regimeList = [
-    { value: 'aberto', label: 'Regime Aberto' },
-    { value: 'semiaberto', label: 'Regime Semiaberto' },
-    { value: 'fechado', label: 'Regime Fechado' },
-    { value: 'provisorio', label: 'Prisão Provisória' },
+    { value: 'Aberto', label: 'Regime Aberto' },
+    { value: 'Semiaberto', label: 'Regime Semiaberto' },
+    { value: 'Fechado', label: 'Regime Fechado' },
+    { value: 'Provisório', label: 'Prisão Provisória' },
 ];
 
 const sexoList = [
@@ -131,7 +131,13 @@ function RenderSelect({
     return (
         <div className="space-y-2 ">
             <Label htmlFor={name}>{label}</Label>
-            <Select value={value} onValueChange={(value) => setValue(name, value)}>
+            <Select value={value} onValueChange={(newValue) => {
+                // Ignorar onValueChange com string vazia se já temos um valor
+                if (newValue === "" && value && value !== "") {
+                    return;
+                }
+                setValue(name, newValue);
+            }}>
                 <SelectTrigger>
                     <SelectValue placeholder={placeholder} />
                 </SelectTrigger>
@@ -171,38 +177,76 @@ function PersonRegisterContent() {
     } = useForm<PersonFormData>({
         resolver: zodResolver(personSchema),
         defaultValues: {
-            nome: personToEdit.current?.nome || '',
-            cpf: personToEdit.current?.cpf.replace(/\w+;-,/, '') || '',
-            rg: personToEdit.current?.rg.replace(/\w+;-,/, '') || '',
-            dataNascimento: personToEdit.current?.dataNascimento || '',
-            sexo: personToEdit.current?.sexo || '',
-            vara: personToEdit.current?.vara || '',
-            regime: personToEdit.current?.regime || '',
-            naturalidade: personToEdit.current?.Naturalidade || '',
-            nacionalidade: personToEdit.current?.Nacionalidade || 'Brasileira',
-            nomePai: personToEdit.current?.Nome_Pai || '',
-            nomeMae: personToEdit.current?.Nome_Mae || '',
-            cidade: personToEdit.current?.cidade || '',
-            uf: personToEdit.current?.uf || '',
-            contato1: personToEdit.current?.Contato_1 || '',
-            contato2: personToEdit.current?.Contato_2 || '',
-            processo: personToEdit.current?.processo || '',
-            motivoEncerramento: personToEdit.current?.Motivo_Encerramento || '',
-            dadosAdicionais: personToEdit.current?.Dados_Adicionais || '',
-            idFacial: personToEdit.current?.idFacial || '',
-            tipo_frequencia: personToEdit.current?.tipo_frequencia || '',
-            foto: personToEdit.current?.Foto || null,
+            nome: '',
+            cpf: '',
+            rg: '',
+            dataNascimento: '',
+            sexo: '',
+            vara: '',
+            regime: '',
+            naturalidade: '',
+            nacionalidade: 'Brasileira',
+            nomePai: '',
+            nomeMae: '',
+            cidade: '',
+            uf: '',
+            contato1: '',
+            contato2: '',
+            processo: '',
+            motivoEncerramento: '',
+            dadosAdicionais: '',
+            idFacial: '',
+            tipo_frequencia: '',
+            foto: null,
         }
     });
 
      useEffect(() => {
-         if (typeof window !== "undefined") {
+        if (typeof window !== "undefined") {
             const editingPerson = sessionStorage.getItem("editingPerson");
             if (editingPerson) {
             try {
                 const parsed = JSON.parse(editingPerson);
-                console.log("editingPerson", parsed); // aqui você já tem o objeto completo
                 personToEdit.current = parsed;
+                
+                // Reset do formulário com os dados da pessoa
+                if (editMode && parsed) {
+                    const formData = {
+                        nome: parsed.nome || '',
+                        cpf: parsed.cpf?.replace(/\W/g, '') || '',
+                        rg: parsed.rg?.replace(/\W/g, '') || '',
+                        dataNascimento: parsed.dataNascimento || '',
+                        sexo: parsed.sexo || '',
+                        vara: parsed.vara || '',
+                        regime: parsed.regime || '',
+                        naturalidade: parsed.Naturalidade || '',
+                        nacionalidade: parsed.Nacionalidade || 'Brasileira',
+                        nomePai: parsed.Nome_Pai || '',
+                        nomeMae: parsed.Nome_Mae || '',
+                        cidade: parsed.cidade || '',
+                        uf: parsed.uf || '',
+                        contato1: parsed.Contato_1 || '',
+                        contato2: parsed.Contato_2 || '',
+                        processo: parsed.processo || '',
+                        motivoEncerramento: parsed.Motivo_Encerramento || '',
+                        dadosAdicionais: parsed.Dados_Adicionais || '',
+                        idFacial: parsed.idFacial || '',
+                        tipo_frequencia: parsed.tipo_frequencia || '',
+                        foto: parsed.Foto || null,
+                    };
+                    
+                    reset(formData);
+                    
+                    // Garantir que os campos de seleção sejam definidos
+                    if (parsed.sexo) setValue('sexo', parsed.sexo);
+                    if (parsed.vara) setValue('vara', parsed.vara);
+                    if (parsed.regime) setValue('regime', parsed.regime);
+                    if (parsed.uf) setValue('uf', parsed.uf);
+                    if (parsed.tipo_frequencia) setValue('tipo_frequencia', parsed.tipo_frequencia);
+                    
+                    setIsActive(parsed.isActive || false);
+                    setCapturedImage(parsed.Foto || null);
+                }
             } catch (e) {
                 console.error("Erro ao parsear editingPerson:", e);
             }
@@ -218,47 +262,14 @@ function PersonRegisterContent() {
             }
             }
         }
-    },[editMode, watch, setValue, reset]);    
-
-    useEffect(() => {
-        setOpenL(true);
-        if (editMode) {
-            reset({
-                nome: personToEdit.current?.nome || '',
-                cpf: personToEdit.current?.cpf.replace(/\W/g, '') || '',
-                rg: personToEdit.current?.rg.replace(/\W/g, '') || '',
-                dataNascimento: personToEdit.current?.dataNascimento || '',
-                sexo: personToEdit.current?.sexo || '',
-                vara: personToEdit.current?.vara || '',
-                regime: personToEdit.current?.regime || '',
-                naturalidade: personToEdit.current?.Naturalidade || '',
-                nacionalidade: personToEdit.current?.Nacionalidade || 'Brasileira',
-                nomePai: personToEdit.current?.Nome_Pai || '',
-                nomeMae: personToEdit.current?.Nome_Mae || '',
-                cidade: personToEdit.current?.cidade || '',
-                uf: personToEdit.current?.uf || '',
-                contato1: personToEdit.current?.Contato_1 || '',
-                contato2: personToEdit.current?.Contato_2 || '',
-                processo: personToEdit.current?.processo || '',
-                motivoEncerramento: personToEdit.current?.Motivo_Encerramento || '',
-                dadosAdicionais: personToEdit.current?.Dados_Adicionais || '',
-                idFacial: personToEdit.current?.idFacial || '',
-                tipo_frequencia: personToEdit.current?.tipo_frequencia || '',
-                foto: personToEdit.current?.Foto || null,
-            });
-            setIsActive(personToEdit.current?.isActive || false);
-            setCapturedImage(personToEdit.current?.Foto || null);
-        }
-        console.log("personToEdit-watch", watch())
-        setOpenL(false);
-    }, [reset, editMode, watch]);
+    },[editMode, reset, setValue, watch]);
 
 
     const onSubmit = async (data: PersonFormData) => {
         setOpenL(true);
         try {
             if (editMode) {
-                await api.put(`pessoas/pessoas-list/`, {
+                const payload = {
                     id: personToEdit.current?.id,
                     Nome: data.nome,
                     CPF: data.cpf,
@@ -281,9 +292,12 @@ function PersonRegisterContent() {
                     tipo_frequencia: data.tipo_frequencia,
                     Status: isActive ? "Ativo" : "Inativo",
                     Foto: capturedImage ? capturedImage : null,
+                    Prontuario: '',
                     ID_usuario: JSON.parse(sessionStorage.getItem('user') || '{}').id,
-                    ID_CPMA_UNIDADE: JSON.parse(sessionStorage.getItem('id_cpma_unidade') || '1'),
-                }).then((response) => {
+                    ID_CPMA_UNIDADE: JSON.parse(sessionStorage.getItem('cpma_unidade') || '{"id": "1"}').id,
+                };
+                
+                await api.put(`api/pessoa`, payload).then((response) => {
                     setOpenL(false);
                     if (response.data.status !== 1) {
                         toast({
@@ -308,8 +322,7 @@ function PersonRegisterContent() {
                 });
 
             } else {
-
-                await api.post(`pessoas/pessoas-list/`, {
+                const payload = {
                     Nome: data.nome,
                     CPF: data.cpf,
                     RG: data.rg,
@@ -332,9 +345,12 @@ function PersonRegisterContent() {
                     tipo_frequencia: data.tipo_frequencia,
                     Status: isActive ? "Ativo" : "Inativo",
                     Foto: capturedImage ? capturedImage : null,
+                    Prontuario: '',
                     ID_usuario: JSON.parse(sessionStorage.getItem('user') || '{}').id,
-                    ID_CPMA_UNIDADE: JSON.parse(sessionStorage.getItem('id_cpma_unidade') || '1'),
-                }).then((response) => {
+                    ID_CPMA_UNIDADE: JSON.parse(sessionStorage.getItem('cpma_unidade') || '{"id": "1"}').id,
+                };
+                
+                await api.post(`api/pessoa`, payload).then((response) => {
                     if (response.data.status !== 1) {
                         setOpenL(false);
                         toast({

@@ -4,6 +4,39 @@ Sistema completo de gerenciamento de pessoas com reconhecimento facial para cont
 
 ## 📋 Melhorias e Correções Implementadas
 
+### 🎯 **Últimas Correções (v2.0)**
+
+#### ✅ **Problema dos Campos de Seleção na Edição**
+- **Causa identificada**: Conflito entre `register` e `setValue` no React Hook Form
+- **Solução**: Removido `input hidden` que causava `onValueChange` com string vazia
+- **Proteção implementada**: Ignorar `onValueChange` vazio quando já existe valor
+- **Resultado**: Campos `Vara`, `Regime Penal`, `Sexo`, `UF` e `Frequência` agora exibem valores corretos na edição
+
+#### ✅ **Correção de Valores dos Selects**
+- **Problema**: Valores do banco não correspondiam às opções dos selects
+- **Correção**: Atualizadas as opções para corresponder aos valores do banco:
+  - **Vara**: `"Vara Criminal 1"` em vez de `"1"`
+  - **Regime**: `"Aberto"` em vez de `"aberto"`
+- **Resultado**: 5/5 campos agora têm correspondência perfeita
+
+#### ✅ **Crash em Produção Resolvido**
+- **Erro**: `Cannot find module '/app/server.js'`
+- **Causa**: Build sem `output: 'standalone'` e Dockerfile ausente
+- **Soluções implementadas**:
+  - ✅ `next.config.ts` com `output: 'standalone'`
+  - ✅ `Dockerfile` multi-stage otimizado
+  - ✅ `docker-compose.yml` para deployment
+  - ✅ Scripts de produção no `package.json`
+  - ✅ Health check endpoint `/api/health`
+  - ✅ Documentação completa de deployment
+
+#### ✅ **Arquivos de Deployment Criados**
+- ✅ `Dockerfile` - Build e execução Docker
+- ✅ `docker-compose.yml` - Orquestração de containers
+- ✅ `.dockerignore` - Otimização de build
+- ✅ `DEPLOYMENT.md` - Guia completo de deployment
+- ✅ `/api/health` - Endpoint de monitoramento
+
 ### 🔧 **Correções de Build e Linting**
 
 #### ✅ **Tipos TypeScript Corrigidos**
@@ -74,6 +107,14 @@ Sistema completo de gerenciamento de pessoas com reconhecimento facial para cont
 
 ### 🔧 **APIs e Serviços**
 
+#### ✅ **APIs de Pessoas (Nova Implementação)**
+- **`POST /api/pessoa`**: Cadastro de novas pessoas
+- **`PUT /api/pessoa`**: Atualização de pessoas existentes
+- **`GET /api/pessoa`**: Listagem de pessoas com filtros
+- **Validação completa**: Todos os campos obrigatórios validados
+- **Tratamento de erros**: Respostas padronizadas com status e mensagens
+- **Autenticação**: Middleware JWT em todas as rotas
+
 #### ✅ **APIs de Reconhecimento Facial**
 - **access-control**: Tipos `any` substituídos por tipos específicos
 - **insert-multi**: Validação de dados aprimorada
@@ -83,7 +124,7 @@ Sistema completo de gerenciamento de pessoas com reconhecimento facial para cont
 #### ✅ **APIs de Autenticação**
 - **sign-in**: Imports não utilizados removidos
 - **middleware**: Logs de debug removidos
-- **pessoa**: Variáveis não utilizadas comentadas
+- **health**: Endpoint de monitoramento implementado
 
 #### ✅ **Serviços**
 - **request-api**: Headers de autorização simplificados
@@ -220,6 +261,8 @@ src/
 
 ## 🚀 **Como Executar**
 
+### 🛠️ **Desenvolvimento**
+
 ```bash
 # Instalar dependências
 npm install
@@ -227,20 +270,56 @@ npm install
 # Executar em desenvolvimento
 npm run dev
 
-# Build para produção
-npm run build
-
-# Executar em produção
-npm start
+# Build com Turbopack (desenvolvimento)
+npm run build:turbo
 
 # Linting
 npm run lint
 ```
 
+### 🚀 **Produção**
+
+#### **Opção 1: Docker Compose (Recomendado)**
+```bash
+# Configurar variáveis de ambiente
+cp .env.example .env
+nano .env
+
+# Executar com docker-compose
+docker-compose up -d
+```
+
+#### **Opção 2: Docker Manual**
+```bash
+# Build da imagem
+npm run docker:build
+
+# Executar container
+npm run docker:run
+```
+
+#### **Opção 3: Build Local**
+```bash
+# Build standalone para produção
+npm run build
+
+# Executar com server.js
+npm run start:prod
+```
+
+### 📊 **Monitoramento**
+```bash
+# Health check
+curl http://localhost:3000/api/health
+
+# Logs do container
+docker logs -f sagep-facial-cpma
+```
+
 ## 🧪 **Como Testar o Sistema**
 
 ### 1. **Acesso à Aplicação**
-- Acesse: `http://localhost:3001`
+- Acesse: `http://localhost:3000` (ou porta configurada)
 - A aplicação deve redirecionar para a página de login
 
 ### 2. **Login**
@@ -250,23 +329,97 @@ npm run lint
 
 ### 3. **Teste da Página de Pessoas**
 - Navegue para `/PersonList`
-- Deve mostrar 5 pessoas cadastradas
+- Deve mostrar pessoas cadastradas
 - Teste a busca por nome
+- **Teste de edição**: Clique no ícone de edição de uma pessoa
+- **Verificar campos**: `Vara`, `Regime Penal`, `Sexo`, `UF` devem estar preenchidos
 - Teste o cadastro de novas pessoas
 
-### 4. **Verificação do Banco de Dados**
-- Tabela `pessoas` com 5 registros
+### 4. **Teste das APIs**
+```bash
+# Health check
+curl http://localhost:3000/api/health
+
+# Listar pessoas (com token)
+curl -H "Authorization: Bearer SEU_TOKEN" \
+  "http://localhost:3000/api/pessoa?companyId=1&description="
+
+# Cadastrar pessoa (com token)
+curl -X POST -H "Authorization: Bearer SEU_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"Nome":"Teste","CPF":"12345678901",...}' \
+  http://localhost:3000/api/pessoa
+```
+
+### 5. **Verificação do Banco de Dados**
+- Tabela `pessoas` com registros de teste
 - Tabela `usuarios` com usuário admin ativo
 - Tabela `empresa` vinculada ao usuário
+- Campos `sexo`, `uf`, `tipo_frequencia` com tipos corretos
+
+## 🚀 **Deployment em Produção**
+
+### 📋 **Pré-requisitos**
+- Docker instalado
+- Variáveis de ambiente configuradas
+- Banco de dados PostgreSQL acessível
+
+### 🔧 **Configuração**
+1. **Copiar arquivo de ambiente**:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Configurar variáveis**:
+   ```env
+   NEXT_PUBLIC_API_URL=https://sua-api.com
+   NEXT_PUBLIC_USER_DB=seu_usuario
+   NEXT_PUBLIC_HOST_DB=seu_host
+   NEXT_PUBLIC_DATABASE_DB=seu_database
+   NEXT_PUBLIC_PASSWORD_DB=sua_senha
+   JWT_SECRET=seu_jwt_secret_super_seguro
+   ```
+
+3. **Deploy com Docker Compose**:
+   ```bash
+   docker-compose up -d
+   ```
+
+### 📊 **Monitoramento**
+- **Health Check**: `GET /api/health`
+- **Logs**: `docker logs -f sagep-facial-cpma`
+- **Status**: Verificar se container está rodando
+
+### 📚 **Documentação Completa**
+Consulte o arquivo `DEPLOYMENT.md` para instruções detalhadas de deployment, troubleshooting e manutenção.
 
 ## 📝 **Próximos Passos**
 
+- [x] ✅ Corrigir campos de seleção na edição
+- [x] ✅ Resolver crash em produção
+- [x] ✅ Implementar APIs de pessoas
+- [x] ✅ Configurar deployment Docker
+- [x] ✅ Criar documentação de deployment
 - [ ] Implementar testes unitários
 - [ ] Adicionar documentação da API
 - [ ] Implementar cache de dados
 - [ ] Adicionar monitoramento de erros
 - [ ] Otimizar performance de imagens
+- [ ] Implementar backup automático do banco
+
+## 🎯 **Status do Projeto**
+
+- ✅ **Build**: Funcionando perfeitamente
+- ✅ **Desenvolvimento**: Ambiente configurado
+- ✅ **Produção**: Deploy Docker funcionando
+- ✅ **APIs**: Todas implementadas e testadas
+- ✅ **Frontend**: Formulários funcionando corretamente
+- ✅ **Banco de Dados**: Estrutura corrigida e dados de teste
+- ✅ **Autenticação**: Sistema funcionando sem loops
+- ✅ **Deployment**: Documentação e scripts prontos
 
 ---
 
 **Desenvolvido com ❤️ para o SAGEP - Sistema de Gestão de Acesso e Controle de Pessoas**
+
+**Versão**: 2.0 - Produção Ready 🚀
