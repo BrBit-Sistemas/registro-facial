@@ -410,6 +410,9 @@ curl -X POST -H "Authorization: Bearer SEU_TOKEN" \
 - **`DEPLOYMENT.md`**: Instruções detalhadas de deployment Docker
 - **`RAILWAY_DEPLOYMENT.md`**: Guia específico para deployment no Railway
 - **`RAILWAY_TROUBLESHOOTING.md`**: Soluções para problemas do Railway
+- **`RELEASE_NOTES.md`**: Notas completas da release v2.0
+- **`CHANGELOG.md`**: Histórico detalhado de mudanças
+- **`RELEASE_TEMPLATE.md`**: Template para releases futuras
 
 ## 📝 **Próximos Passos**
 
