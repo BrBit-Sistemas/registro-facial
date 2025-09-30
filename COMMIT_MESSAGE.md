@@ -50,13 +50,25 @@ feat: implementa correções completas v2.0 - produção ready
 - IMPLEMENTA APIS DE PESSOAS: POST, PUT, GET com validação completa
 - ADICIONA DEPLOYMENT: Docker Compose, health check, documentação completa
 
+## 🔧 Correções de Build Docker v2.1
+- CORRIGE BUILD DOCKER: Resolve erro lightningcss.linux-arm64-musl.node
+- DOWNGRADE TAILWIND: Tailwind CSS v4 → v3.4.0 estável
+- CORRIGE GLOBALS.CSS: Substitui @import por diretivas @tailwind corretas
+- ATUALIZA POSTCSS: Configuração compatível com Tailwind v3
+- ADICIONA AUTOPREFIXER: Para compatibilidade CSS
+- OTIMIZA DOCKERFILE: Node.js 20, build simplificado
+- TESTA DEPLOYMENT: Build e container funcionando perfeitamente
+
 ## 🧹 Limpeza de Código
 - Remove pasta 'ui - Copia' com arquivos duplicados
 - Organiza imports e remove dependências desnecessárias
 - Estrutura de componentes otimizada
 
 ## ✅ Resultados
-- Build: 0 erros
+- Build Local: 0 erros
+- Build Docker: 0 erros
+- Container: Rodando e respondendo
+- Health Check: Endpoint funcionando
 - Linting: 0 warnings  
 - TypeScript: sem erros de tipo
 - Next.js: todas as páginas geradas corretamente
@@ -67,6 +79,7 @@ feat: implementa correções completas v2.0 - produção ready
 - CAMPOS DE SELEÇÃO: Funcionando perfeitamente na edição
 - PRODUÇÃO: Deploy Docker funcionando sem crashes
 - APIS: Todas implementadas e testadas
+- TAILWIND CSS: Versão estável v3.4.0 funcionando
 
 ## 📁 Arquivos Modificados
 - 25 arquivos TypeScript/TSX corrigidos
@@ -76,15 +89,18 @@ feat: implementa correções completas v2.0 - produção ready
 - Dockerfile, docker-compose.yml, .dockerignore criados
 - DEPLOYMENT.md com guia completo
 - /api/health endpoint implementado
+- package.json: Tailwind CSS v4 → v3.4.0, autoprefixer adicionado
+- postcss.config.mjs: Configuração atualizada para Tailwind v3
+- src/app/globals.css: Diretivas @tailwind corretas
 
-Resolves: build errors, linting warnings, authentication issues, infinite loops, select fields, production crashes
-Improves: code quality, type safety, user experience, performance, database structure, deployment, production readiness
+Resolves: build errors, linting warnings, authentication issues, infinite loops, select fields, production crashes, docker build failures
+Improves: code quality, type safety, user experience, performance, database structure, deployment, production readiness, docker compatibility
 ```
 
 ## Versão Resumida para Git
 
 ```
-feat: correções completas v2.0 - produção ready
+feat: correções completas v2.1 - docker build funcionando
 
 - Substitui tipos 'any' por tipos específicos
 - Remove variáveis não utilizadas e imports desnecessários  
@@ -94,9 +110,10 @@ feat: correções completas v2.0 - produção ready
 - Corrige lógica invertida no PrivateRoute que impedia acesso
 - CORRIGE CAMPOS DE SELEÇÃO: Remove conflito register/setValue
 - CORRIGE CRASH EM PRODUÇÃO: Implementa Docker e output standalone
+- CORRIGE BUILD DOCKER: Tailwind CSS v4 → v3.4.0 estável
 - IMPLEMENTA APIS DE PESSOAS: POST, PUT, GET completas
 - ADICIONA DEPLOYMENT: Docker Compose, health check, documentação
-- Build: 0 erros, Linting: 0 warnings, Produção: funcionando
+- Build Local: 0 erros, Build Docker: 0 erros, Container: funcionando
 
-Resolves: build errors, linting warnings, authentication issues, infinite loops, select fields, production crashes
+Resolves: build errors, linting warnings, authentication issues, infinite loops, select fields, production crashes, docker build failures
 ```

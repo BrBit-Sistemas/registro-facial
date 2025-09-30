@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
         return false;
       }
-    } catch (error) {
+    } catch {
       setIsAuthenticated(false);
       setIsLoading(false);
       toast({
