@@ -119,7 +119,7 @@ export default function Dashboard() {
 
       {/* Charts */}
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="shadow-md">
+        <Card className="shadow-md hover:shadow-lg transition-shadow">
           <CardHeader>
             <CardTitle>Cadastros de Pessoas</CardTitle>
             <CardDescription>Evolução mensal de novos cadastros</CardDescription>
@@ -149,7 +149,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-md">
+        <Card className="shadow-md hover:shadow-lg transition-shadow">
           <CardHeader>
             <CardTitle>Registros Faciais</CardTitle>
             <CardDescription>Leituras realizadas nos últimos 7 dias</CardDescription>
@@ -179,7 +179,7 @@ export default function Dashboard() {
       </div>
 
       {/* Pie Chart */}
-      <Card className="shadow-md">
+      <Card className="shadow-md hover:shadow-lg transition-shadow">
         <CardHeader>
           <CardTitle>Status de Registro Facial</CardTitle>
           <CardDescription>Pessoas com e sem registro nos últimos 30 dias</CardDescription>

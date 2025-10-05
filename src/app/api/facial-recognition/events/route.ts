@@ -2,132 +2,147 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from '@/lib/db';
 
-// Cache em memória para prevenir duplicatas em curto período
-const recentReadings = new Map();
+// Constants
 const DEDUPLICATION_WINDOW = 30000; // 30 segundos
+const BOUNDARY_MARKER = "--myboundary";
+const RECENT_READINGS_CACHE_LIMIT = 1000;
 
-export async function POST(req: NextRequest) {
-  try {
-    // 1) Pega o corpo como texto bruto
-    const rawBody = await req.text();
+// Cache em memória para prevenir duplicatas
+const recentReadings = new Map<string, number>();
 
-    // 2) Extrai JSON do multipart
+// Types
+interface EventData {
+  UserID?: string;
+  ReaderID?: string;
+  ReadID?: string;
+}
+
+interface Event {
+  Data: EventData;
+}
+
+interface ParsedRequest {
+  Events?: Event[];
+}
+
+interface User {
+  id: number;
+  prontuario: string;
+  nome_completo: string;
+  vara: string;
+  regime_penal: string;
+  processo: string;
+}
+
+// Utility functions
+class FacialRecognitionService {
+  /**
+   * Extrai JSON do corpo multipart
+   */
+  static extractJsonFromMultipart(rawBody: string): string {
     let jsonStr = "";
-    let escrever = false;
+    let isWriting = false;
     const lines = rawBody.split(/\r\n|\n|\r/);
 
     for (let i = 0; i < lines.length - 1; i++) {
-      if (lines[i].startsWith("--myboundary")) {
-        if (!escrever) {
-          escrever = true;
-          i += 3;
+      if (lines[i].startsWith(BOUNDARY_MARKER)) {
+        if (!isWriting) {
+          isWriting = true;
+          i += 3; // Pula headers do multipart
           continue;
         } else {
           break;
         }
       }
 
-      if (escrever) {
+      if (isWriting) {
         jsonStr += lines[i].trim();
       }
     }
 
-    if (!jsonStr) {
-      return NextResponse.json({ error: "Nenhum JSON encontrado" }, { status: 400 });
-    }
+    return jsonStr;
+  }
 
-    const parsed = JSON.parse(jsonStr);
-
-    // 3) Pega os dados igual no PHP
-    const evento = parsed?.Events?.[0];
-    if (!evento) {
-      return NextResponse.json({ error: "Evento inválido" }, { status: 400 });
-    }
-
-    const data = evento.Data;
+  /**
+   * Processa dados do evento e extrai userId e leitorId
+   */
+  static processEventData(data: EventData): { userId: string; leitorId: string } {
     let userId = (data.UserID || "").trim();
-    let leitorId = "";
+    let leitorId = data.ReaderID || "";
 
     if (userId === "") {
       userId = "-1";
-      leitorId = data.ReaderID;
+      leitorId = data.ReaderID || "";
     } else {
-      leitorId = data.ReadID || data.ReaderID;
+      leitorId = data.ReadID || data.ReaderID || "";
     }
 
-    // 4) Verificação de duplicidade - Cache em memória
-    const readingKey = `${userId}-${leitorId}-${Date.now()}`;
-    const recentKey = Array.from(recentReadings.entries())
-      .find(([key, timestamp]) => 
-        key.startsWith(`${userId}-${leitorId}`) && 
-        (Date.now() - timestamp) < DEDUPLICATION_WINDOW);
+    return { userId, leitorId };
+  }
+
+  /**
+   * Verifica duplicidade em cache de memória
+   */
+  static checkMemoryCache(userId: string, leitorId: string): boolean {
+    const now = Date.now();
     
-    if (recentKey) {
-      console.log("Leitura duplicada detectada (cache)", userId, leitorId);
-      return NextResponse.json({
-        message: "Leitura já processada recentemente",
-        code: "200",
-        auth: "false"
-      }, { status: 409 });
-    }
-    
-    // Adicionar ao cache
-    recentReadings.set(readingKey, Date.now());
-    
-    // Limpar cache antigo periodicamente
-    if (recentReadings.size > 1000) {
+    // Limpa cache antigo periodicamente
+    if (recentReadings.size > RECENT_READINGS_CACHE_LIMIT) {
       for (const [key, timestamp] of recentReadings.entries()) {
-        if (Date.now() - timestamp > DEDUPLICATION_WINDOW) {
+        if (now - timestamp > DEDUPLICATION_WINDOW) {
           recentReadings.delete(key);
         }
       }
     }
 
-    // 5) Verificação de duplicidade - Banco de dados
-    // Primeiro, busca o usuário pelo ID facial
-    const userQuery = await pool.query(
-      'SELECT id, prontuario, nome_completo, vara, regime_penal, processo FROM pessoas WHERE prontuario = $1',
+    // Verifica se existe leitura recente
+    return Array.from(recentReadings.entries())
+      .some(([key, timestamp]) => 
+        key.startsWith(`${userId}-${leitorId}`) && 
+        (now - timestamp) < DEDUPLICATION_WINDOW
+      );
+  }
+
+  /**
+   * Adiciona leitura ao cache
+   */
+  static addToMemoryCache(userId: string, leitorId: string): void {
+    const readingKey = `${userId}-${leitorId}-${Date.now()}`;
+    recentReadings.set(readingKey, Date.now());
+  }
+
+  /**
+   * Busca usuário pelo ID facial
+   */
+  static async findUserByFacialId(userId: string): Promise<User | null> {
+    const result = await pool.query(
+      'SELECT id, prontuario, nome_completo, vara, regime_penal, processo FROM pessoas WHERE id_facial = $1',
       [userId]
     );
+    
+    return result.rows.length > 0 ? result.rows[0] : null;
+  }
 
-    if (userQuery.rows.length === 0) {
-      console.log("401 - Rosto não cadastrado", userId);
-      return NextResponse.json({
-        message: "Rosto não cadastrado no sistema!",
-        code: "200",
-        auth: "false"
-      });
-    }
-
-    const user = userQuery.rows[0];
-    const now = new Date();
-    const currentDate = now.toISOString().split('T')[0];
-    const currentTime = now.toTimeString().split(' ')[0];
-
-    // Verifica se já existe uma leitura para este usuário hoje
-    const existingReading = await pool.query(
+  /**
+   * Verifica se já existe leitura recente no banco
+   */
+  static async checkDatabaseDuplication(prontuario: string, currentDate: string, currentTime: string): Promise<boolean> {
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60000).toTimeString().split(' ')[0];
+    
+    const result = await pool.query(
       `SELECT id FROM leitura_biometrica 
        WHERE prontuario = $1 AND data_leitura = $2 
        AND hora_leitura BETWEEN $3 AND $4`,
-      [
-        user.prontuario, 
-        currentDate,
-        // Verifica leituras dentro dos últimos 5 minutos
-        new Date(now.getTime() - 5 * 60000).toTimeString().split(' ')[0],
-        currentTime
-      ]
+      [prontuario, currentDate, fiveMinutesAgo, currentTime]
     );
 
-    if (existingReading.rows.length > 0) {
-      console.log("Leitura duplicada detectada (BD)", user.prontuario);
-      return NextResponse.json({
-        message: "Leitura já registrada hoje",
-        code: "200",
-        auth: "false"
-      }, { status: 409 });
-    }
+    return result.rows.length > 0;
+  }
 
-    // 6) Se não for duplicada, insere a nova leitura
+  /**
+   * Insere nova leitura no banco
+   */
+  static async insertBiometricReading(user: User, currentDate: string, currentTime: string): Promise<number> {
     const result = await pool.query(
       `INSERT INTO leitura_biometrica 
        (hora_leitura, data_leitura, prontuario, nome, vara, regime, tipo, imprimir, processo, id_usuario, id_cpma_unidade) 
@@ -143,23 +158,108 @@ export async function POST(req: NextRequest) {
         'F', // Tipo F para reconhecimento facial
         'N', // Não imprimir comprovante
         user.processo,
-        user.id, // ID do usuário da tabela pessoas
-        '1'  // ID da unidade CPMA (ajustar conforme necessário)
+        user.id,
+        '1'  // ID da unidade CPMA
       ]
     );
 
-    const insertedId = result.rows[0].id;
-    console.log("200 - Leitura registrada", insertedId);
-    
+    return result.rows[0].id;
+  }
+}
+
+// Response helpers
+class ResponseHelper {
+  static success(userId?: number) {
+    console.log(userId);
     return NextResponse.json({
       message: "Favor retirar seu comprovante",
       code: "200",
-      auth: "true",
-      userId: insertedId
+      auth: "true"
     });
+  }
+
+  static error(message: string, status: number = 400) {
+    return NextResponse.json({ error: message }, { status });
+  }
+
+  static duplicateReading() {
+    return NextResponse.json({
+      message: "Leitura já processada recentemente",
+      code: "200",
+      auth: "false"
+    });
+  }
+
+  static userNotFound() {
+    return NextResponse.json({
+      message: "Rosto não cadastrado no sistema!",
+      code: "200",
+      auth: "false"
+    });
+  }
+}
+
+// Main handler
+export async function POST(req: NextRequest) {
+  try {
+    // 1) Extrai e parseia o JSON do multipart
+    const rawBody = await req.text();
+    const jsonStr = FacialRecognitionService.extractJsonFromMultipart(rawBody);
+
+    if (!jsonStr) {
+      return ResponseHelper.error("Nenhum JSON encontrado");
+    }
+
+    const parsed: ParsedRequest = JSON.parse(jsonStr);
+    const evento = parsed?.Events?.[0];
+
+    if (!evento) {
+      return ResponseHelper.error("Evento inválido");
+    }
+
+    // 2) Processa dados do evento
+    const { userId, leitorId } = FacialRecognitionService.processEventData(evento.Data);
+
+    // 3) Verificação de duplicidade em cache
+    if (FacialRecognitionService.checkMemoryCache(userId, leitorId)) {
+      return ResponseHelper.duplicateReading();
+    }
+
+    FacialRecognitionService.addToMemoryCache(userId, leitorId);
+
+    // 4) Busca usuário no banco
+    const user = await FacialRecognitionService.findUserByFacialId(userId);
+    
+    if (!user) {
+      return ResponseHelper.userNotFound();
+    }
+
+    // 5) Verificação de duplicidade no banco
+    const now = new Date();
+    const currentDate = now.toISOString().split('T')[0];
+    const currentTime = now.toTimeString().split(' ')[0];
+
+    const hasDuplicate = await FacialRecognitionService.checkDatabaseDuplication(
+      user.prontuario, 
+      currentDate, 
+      currentTime
+    );
+
+    if (hasDuplicate) {
+      return ResponseHelper.duplicateReading();
+    }
+
+    // 6) Insere nova leitura
+    const insertedId = await FacialRecognitionService.insertBiometricReading(
+      user, 
+      currentDate, 
+      currentTime
+    );
+    
+    return ResponseHelper.success(insertedId);
 
   } catch (err) {
-    console.error("Erro:", err);
-    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+    console.error("Erro no processamento de reconhecimento facial:", err);
+    return ResponseHelper.error("Erro interno", 500);
   }
 }

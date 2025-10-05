@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import { APP_ROUTES } from "@/constants/app-routes";
 import { isAuthenticated } from "@/shared/helper/auth-handler";
@@ -11,7 +11,6 @@ import type { Props } from "@/types/PropsType"
 
 
 const PrivateRoute = ({ children }: Props) => {
-    const pathnema = usePathname();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
 
@@ -19,10 +18,6 @@ const PrivateRoute = ({ children }: Props) => {
 
     const routePublic: string = APP_ROUTES.public.login.path;
 
-    
-  console.log("isPublicPage", pathnema)
-  
-  console.log("isUserAuthenticated", isUserAuthenticated)
     
     useEffect(() => {
         setLoading(true);

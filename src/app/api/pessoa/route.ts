@@ -42,7 +42,7 @@ export async function POST(request: Request) {
       body.UF,
       body.Processo,
       body.Status || 'Ativo',
-      body.Prontuario || '',
+      body.Prontuario || body.idFacial,
       body.Naturalidade,
       body.Nacionalidade,
       body.Nome_Pai,
@@ -192,5 +192,32 @@ export async function PUT(request: Request) {
       error: 'Erro ao atualizar pessoa',
       message: error instanceof Error ? error.message : 'Erro desconhecido'
     }, { status: 500 });
+  }
+}
+export async function DELETE(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const personId = searchParams.get('id');
+  const token = request.headers.get('authorization')?.split(' ')[1];
+  
+  if (!token) {
+    return NextResponse.json({ error: 'No token provided' }, { status: 401 });
+  }
+  const decoded = verifyToken(token);
+  if (!decoded ||!decoded.userId) {
+    return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
+  }
+  if (!personId) {
+    return NextResponse.json({ error: 'Person ID is required' }, { status: 400 });
+  }
+  try {
+    const deleteQuery = 'UPDATE pessoas SET status = $1 WHERE id = $2';
+    const result = await pool.query(deleteQuery, ['Inativo', personId]);
+    if (result.rowCount === 0) {
+      return NextResponse.json({ error: 'Person not found' }, { status: 404 });
+    }
+    return NextResponse.json({ message: 'Person deleted successfully' }, { status: 200 });
+  } catch (error) {
+    console.error('Error deleting person:', error);
+    return NextResponse.json({ error: 'Failed to delete person' }, { status: 500 });
   }
 }
