@@ -88,41 +88,54 @@ export async function PUT(request: Request) {
     
     // Mapear os campos do frontend para o banco de dados
     const updateQuery = `
-      UPDATE pessoas SET 
-        nome_completo = $2, cpf = $3, rg = $4, data_nascimento = $5, sexo = $6, 
-        vara = $7, regime_penal = $8, cidade = $9, uf = $10, processo = $11, 
-        status = $12, prontuario = $13, naturalidade = $14, nacionalidade = $15, 
-        nome_pai = $16, nome_mae = $17, contato_1 = $18, contato_2 = $19, 
-        tipo_frequencia = $20, motivo_encerramento = $21, dados_adicionais = $22, 
-        foto = $23
+      UPDATE empresa SET data_cadastro = $2,
+        razao_social = $3,
+        cnpj = $4, 
+        inscricao_estadual = $5,
+        endereco = $6,
+        complemento = $7,
+        bairro = $8,
+        ponto_referencia = $9,
+        cidade = $10,
+        uf = $11,
+        contato = $12,
+        email = $13,
+        site = $14,
+        dados_adicionais = $15,
+        telefone = $16,
+        celular = $17,
+        cep = $18,
+        responsavel = $19,
+        status = $20,
+        ip_facial = $21,
+        id_usuario = $22
       WHERE id = $1
       RETURNING id
     `;
     
     const values = [
       body.id,
-      body.Nome,
-      body.CPF,
-      body.RG,
-      body.Data_Nascimento,
-      body.Sexo,
-      body.Vara,
-      body.Regime,
-      body.Cidade,
-      body.UF,
-      body.Processo,
-      body.Status || 'Ativo',
-      body.Prontuario || '',
-      body.Naturalidade,
-      body.Nacionalidade,
-      body.Nome_Pai,
-      body.Nome_Mae,
-      body.Contato_1,
-      body.Contato_2,
-      body.tipo_frequencia,
-      body.Motivo_Encerramento,
-      body.Dados_Adicionais,
-      body.Foto
+      body.data_cadastro,
+      body.razao_social,
+      body.cnpj,
+      body.inscricao_estadual,
+      body.endereco,
+      body.complemento,
+      body.bairro,
+      body.ponto_referencia,
+      body.cidade,
+      body.uf,
+      body.contato,
+      body.email,
+      body.site,
+      body.dados_adicionais,
+      body.telefone,
+      body.celular,
+      body.cep,
+      body.responsavel,
+      body.status,
+      body.ip_facial,
+      body.id_usuario
     ];
     
     const result = await pool.query(updateQuery, values);
@@ -130,21 +143,21 @@ export async function PUT(request: Request) {
     if (result.rows.length === 0) {
       return NextResponse.json({ 
         status: 0, 
-        error: 'Pessoa não encontrada'
+        error: 'Empresa não encontrada'
       }, { status: 404 });
     }
     
     return NextResponse.json({ 
       status: 1, 
-      message: "Pessoa atualizada com sucesso!",
+      message: "Empresa atualizada com sucesso!",
       data: { id: result.rows[0].id }
     }, { status: 200 });
     
   } catch (error) {
-    console.error("Erro ao atualizar pessoa:", error);
+    console.error("Erro ao atualizar empresa:", error);
     return NextResponse.json({ 
       status: 0, 
-      error: 'Erro ao atualizar pessoa',
+      error: 'Erro ao atualizar empresa',
       message: error instanceof Error ? error.message : 'Erro desconhecido'
     }, { status: 500 });
   }
@@ -162,17 +175,12 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
   }
   if (!personId) {
-    return NextResponse.json({ error: 'Person ID is required' }, { status: 400 });
+    return NextResponse.json({ error: 'Empresa ID is required' }, { status: 400 });
   }
   try {
-    const deleteQuery = 'UPDATE pessoas SET status = $1 WHERE id = $2';
-    const result = await pool.query(deleteQuery, ['Inativo', personId]);
-    if (result.rowCount === 0) {
-      return NextResponse.json({ error: 'Person not found' }, { status: 404 });
-    }
-    return NextResponse.json({ message: 'Person deleted successfully' }, { status: 200 });
+    return NextResponse.json({ error: 'Empresa não encontrada' }, { status: 404 });
   } catch (error) {
-    console.error('Error deleting person:', error);
-    return NextResponse.json({ error: 'Failed to delete person' }, { status: 500 });
+    console.error('Error deleting empresa:', error);
+    return NextResponse.json({ error: 'Failed to delete empresa' }, { status: 500 });
   }
 }

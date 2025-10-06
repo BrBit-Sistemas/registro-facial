@@ -46,6 +46,7 @@ export const signout = () => {
     sessionStorage.removeItem('user');
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('cpma_unidade');
+    sessionStorage.removeItem('editingPerson');
 };
 
 export const setUserAuth = (data: userType[]) => {

@@ -1,7 +1,7 @@
 'use client';
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -15,9 +15,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { request } from "@/services/request-api/request";
-import UrlParamsService from "@/urlParams/UrlParamsService";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
+import { CompanyResponse } from "@/types/CompanyResponse";
+import { signout } from "@/shared/helper/auth-handler";
 
 const companySchema = z.object({
     tipo: z.enum(['pf', 'pj']),
@@ -31,9 +32,12 @@ const companySchema = z.object({
     cidade: z.string().min(2, 'Cidade é obrigatória'),
     uf: z.string().min(2, 'UF é obrigatório'),
     contato: z.string().min(8, 'Contato é obrigatório'),
-    email: z.string().email('Email inválido').optional(),
-    site: z.string().url('URL inválida').optional().or(z.literal('')),
+    email: z.string().optional(),
+    site: z.string().optional(),
     dadosAdicionais: z.string().optional(),
+    cep: z.string().min(8, 'CEP é obrigatório'),
+    responsavel: z.string().optional(),
+    ipFacial: z.string().optional(),
 });
 
 const UFList = [
@@ -117,9 +121,9 @@ type CompanyFormData = z.infer<typeof companySchema>;
 
 export default function CompanyRegisterPage() {
     const [entityType, setEntityType] = useState<'pf' | 'pj'>('pj');
-    const urlParams = useMemo(() => new UrlParamsService(), []);
     const [openL, setOpenL] = useState(false);
     const idCompany = useRef('');
+    const [companyData, setCompanyData] = useState<CompanyResponse | null>(null);
 
     const {
         register,
@@ -135,37 +139,99 @@ export default function CompanyRegisterPage() {
     });
 
     const onSubmit = async (data: CompanyFormData) => {
-        try {
-            console.log('Company data:', data);
 
-            toast.success("CPMA cadastrado com sucesso!");
+        setOpenL(true);
+
+        try {
+             const payload = {
+                id: idCompany.current,
+                data_cadastro: companyData?.data_cadastro || new Date().toISOString(),
+                razao_social: data.razaoSocial,
+                cnpj: data.cnpj,
+                inscricao_estadual: data.ie || '',
+                endereco: data.endereco,
+                complemento: data.complemento || '',
+                bairro: data.bairro,
+                ponto_referencia: data.proximo || '',
+                cidade: data.cidade,
+                uf: data.uf,
+                contato: data.contato,
+                email: data.email || '',
+                site: data.site || '',
+                dados_adicionais: data.dadosAdicionais || '',
+                telefone: data.contato || '',
+                celular: data.contato || '',
+                cep: data.cep || '',
+                responsavel: data.responsavel || '',
+                status: companyData?.status || 'Ativo',
+                ip_facial: data.ipFacial || 'http://192.168.0.1',
+                id_usuario: JSON.parse(sessionStorage.getItem('user') || '{}').id,
+            };
+            try {
+                await request.put(`api/company`, payload).then((response) => {
+
+                    if (response.status !== 200) {
+                        toast.info("Erro ao atualizar empresa");
+                        setOpenL(false);
+                    } else {
+                        toast.success("Cadastro atualizado com sucesso! Faça login novamente.");
+                        setTimeout(() => {
+                           signout();
+                           setOpenL(false);
+                           window.location.href = '/login';
+                        }, 5000);
+                    }
+                }).catch(() => {
+                    setOpenL(false);
+                    toast.info("Erro ao atualizar empresa");
+                });
+            } catch (e) {
+                setOpenL(false);
+                toast.info("Erro ao atualizar empresa");
+                console.error("Erro ao parsear sessionStorage user:", e);
+            }
         } catch {
+            setOpenL(false);
             toast.info("Erro ao cadastrar CPMA");
         }
     };
 
-    const getCompanyData = (async () => {
-        const valueUrl = {
-            companyId: idCompany.current
-        };
-        const params = urlParams.injectUrlParams(valueUrl);
+    const getCompanyData = (async ({cpmaData}: {cpmaData: CompanyResponse}) => {
 
-        setOpenL(true);
         try {
-                const { data, status } = await request.get( `api/company${params}`);
-                if (status === 200) {
+                if (cpmaData) {
 
-                   console.log('Company data:', data);
-                    
-                    setOpenL(false);
+                        const company = cpmaData;
+                        setCompanyData(company);
 
-                    toast.success("Lista de leitura biometrica!");
+                        // Preencher o formulário com os dados da empresa
+                        setValue('razaoSocial', company.razao_social);
+                        setValue('cnpj', company.cnpj.replace(/\D/g, ''));
+                        setValue('ie', company.inscricao_estadual || '');
+                        setValue('endereco', company.endereco);
+                        setValue('complemento', company.complemento || '');
+                        setValue('bairro', company.bairro);
+                        setValue('proximo', company.ponto_referencia || '');
+                        setValue('cidade', company.cidade);
+                        setValue('uf', company.uf);
+                        setValue('contato', company.contato.replace(/\D/g, ''));
+                        setValue('email', company.email || '');
+                        setValue('site', company.site || '');
+                        setValue('dadosAdicionais', company.dados_adicionais || '');
+                        setValue('cep', company.cep || '');
+                        setValue('responsavel', company.responsavel || '');
+                        setValue('ipFacial', company.ip_facial || 'http://192.168.0.1');
+
+                        idCompany.current = String(company.id);
                 } else {
-                    setOpenL(false);
-                    toast.error("Erro ao carregar lista de leitura biometrica");
+                    toast.error("Erro ao carregar dados da empresa. Faça login novamente.");
+                        setTimeout(() => {
+                           signout();
+                           setOpenL(false);
+                           window.location.href = '/login';
+                        }, 3000);
                 }
             } catch (error) {
-                setOpenL(false);
                 console.error(error);
         }
     })
@@ -190,7 +256,10 @@ export default function CompanyRegisterPage() {
                 toast.error("Erro ao carregar dados da empresa. Faça login novamente.");
             }
         }
-        getCompanyData();
+        const cpmaData = sessionStorage.getItem('cpma_unidade');
+        getCompanyData({cpmaData: cpmaData ? JSON.parse(cpmaData) : []});
+        
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (
@@ -208,22 +277,31 @@ export default function CompanyRegisterPage() {
                             <CardDescription>Selecione o tipo de entidade</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <RadioGroup
-                                defaultValue="pj"
-                                onValueChange={(value) => {
-                                    setEntityType(value as 'pf' | 'pj');
-                                    setValue('tipo', value as 'pf' | 'pj');
-                                }}
-                            >
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="pf" id="pf" />
-                                    <Label htmlFor="pf">Pessoa Física</Label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <RadioGroup
+                                    defaultValue="pj"
+                                    onValueChange={(value) => {
+                                        setEntityType(value as 'pf' | 'pj');
+                                        setValue('tipo', value as 'pf' | 'pj');
+                                    }}
+                                >
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="pf" id="pf" />
+                                        <Label htmlFor="pf">Pessoa Física</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="pj" id="pj" />
+                                        <Label htmlFor="pj">Pessoa Jurídica</Label>
+                                    </div>
+                                </RadioGroup>
+                                <div className="space-y-2">
+                                    <Label htmlFor="ipFacial">Endereço leitor facial</Label>
+                                    <Input 
+                                      id="ipFacial"
+                                      placeholder="http://192.168.0.1"
+                                      {...register('ipFacial')} />
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="pj" id="pj" />
-                                    <Label htmlFor="pj">Pessoa Jurídica</Label>
-                                </div>
-                            </RadioGroup>
+                            </div>
                         </CardContent>
                     </Card>
 
@@ -239,14 +317,6 @@ export default function CompanyRegisterPage() {
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="razaoSocial">
-                                        {entityType === 'pj' ? 'Razão Social' : 'Nome Completo'} *
-                                    </Label>
-                                    <Input id="razaoSocial" {...register('razaoSocial')} />
-                                    {errors.razaoSocial && <p className="text-sm text-destructive">{errors.razaoSocial.message}</p>}
-                                </div>
-
-                                <div className="space-y-2">
                                     <Label htmlFor="cnpj">
                                         {entityType === 'pj' ? 'CNPJ' : 'CPF'} *
                                     </Label>
@@ -258,6 +328,13 @@ export default function CompanyRegisterPage() {
                                     />
                                     {errors.cnpj && <p className="text-sm text-destructive">{errors.cnpj.message}</p>}
                                 </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="razaoSocial">
+                                        {entityType === 'pj' ? 'Razão Social' : 'Nome Completo'} *
+                                    </Label>
+                                    <Input id="razaoSocial" {...register('razaoSocial')} />
+                                    {errors.razaoSocial && <p className="text-sm text-destructive">{errors.razaoSocial.message}</p>}
+                                </div>
                             </div>
 
                             {entityType === 'pj' && (
@@ -266,11 +343,23 @@ export default function CompanyRegisterPage() {
                                     <Input id="ie" {...register('ie')} />
                                 </div>
                             )}
-
-                            <div className="space-y-2">
-                                <Label htmlFor="endereco">Endereço *</Label>
-                                <Input id="endereco" {...register('endereco')} />
-                                {errors.endereco && <p className="text-sm text-destructive">{errors.endereco.message}</p>}
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="contato">CEP *</Label>
+                                    <Input
+                                        id="cep"
+                                        type="number"
+                                        {...register('cep')}
+                                        placeholder="00000000"
+                                    />
+                                    {errors.cep && <p className="text-sm text-destructive">{errors.cep.message}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="endereco">Endereço *</Label>
+                                    <Input id="endereco" {...register('endereco')} />
+                                    {errors.endereco && <p className="text-sm text-destructive">{errors.endereco.message}</p>}
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -285,10 +374,16 @@ export default function CompanyRegisterPage() {
                                     {errors.bairro && <p className="text-sm text-destructive">{errors.bairro.message}</p>}
                                 </div>
                             </div>
-
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="proximo">Ponto de Referência</Label>
                                 <Input id="proximo" {...register('proximo')} placeholder="Próximo a..." />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="responsavel">Responsavel</Label>
+                                <Input id="responsavel" {...register('responsavel')} placeholder="Nome do Responsavel" />
+                            </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -317,8 +412,9 @@ export default function CompanyRegisterPage() {
                                     <Label htmlFor="contato">Contato *</Label>
                                     <Input
                                         id="contato"
+                                        type="number"
                                         {...register('contato')}
-                                        placeholder="(00) 00000-0000"
+                                        placeholder="47999999999"
                                     />
                                     {errors.contato && <p className="text-sm text-destructive">{errors.contato.message}</p>}
                                 </div>

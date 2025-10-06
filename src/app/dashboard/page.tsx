@@ -22,33 +22,39 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 
   // Mock data for charts
   const registrationData = [
-    { month: 'Jan', registrations: 45 },
-    { month: 'Fev', registrations: 52 },
-    { month: 'Mar', registrations: 38 },
-    { month: 'Abr', registrations: 65 },
-    { month: 'Mai', registrations: 48 },
-    { month: 'Jun', registrations: 72 },
+    { month: 'Jan', registrations: 0 },
+    { month: 'Fev', registrations: 0 },
+    { month: 'Mar', registrations: 0 },
+    { month: 'Abr', registrations: 0 },
+    { month: 'Mai', registrations: 0 },
+    { month: 'Jun', registrations: 0 },
+    { month: 'Jul', registrations: 0 },
+    { month: 'Ago', registrations: 0 },
+    { month: 'Set', registrations: 0 },
+    { month: 'Out', registrations: 15 },
+    { month: 'Nov', registrations: 0 },
+    { month: 'Dez', registrations: 0 }
   ];
 
   const facialData = [
-    { day: 'Seg', readings: 120 },
-    { day: 'Ter', readings: 145 },
-    { day: 'Qua', readings: 138 },
-    { day: 'Qui', readings: 162 },
-    { day: 'Sex', readings: 155 },
-    { day: 'Sáb', readings: 85 },
-    { day: 'Dom', readings: 45 },
+    { day: 'Seg', readings: 9 },
+    { day: 'Ter', readings: 0 },
+    { day: 'Qua', readings: 0 },
+    { day: 'Qui', readings: 0 },
+    { day: 'Sex', readings: 0 },
+    { day: 'Sáb', readings: 0 },
+    { day: 'Dom', readings: 0 },
   ];
 
   const pieData = [
-    { name: 'Com Registro', value: 78, color: 'hsl(var(--accent))' },
-    { name: 'Sem Registro', value: 22, color: 'hsl(var(--destructive))' },
+    { name: 'Com Registro', value: 15, color: 'hsl(var(--accent))' },
+    { name: 'Sem Registro', value: 0, color: 'hsl(var(--destructive))' },
   ];
 
   const stats = [
     {
       title: 'Total de Pessoas',
-      value: '1,234',
+      value: '9',
       change: '+12%',
       trend: 'up',
       icon: Users,
@@ -56,7 +62,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
     },
     {
       title: 'Registros Hoje',
-      value: '156',
+      value: '12',
       change: '+5%',
       trend: 'up',
       icon: UserCheck,
@@ -64,7 +70,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
     },
     {
       title: 'Sem Registro (30 dias)',
-      value: '89',
+      value: '0',
       change: '-8%',
       trend: 'down',
       icon: UserX,
@@ -72,7 +78,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
     },
     {
       title: 'Leituras Faciais',
-      value: '850',
+      value: '15',
       change: '+18%',
       trend: 'up',
       icon: ScanFace,

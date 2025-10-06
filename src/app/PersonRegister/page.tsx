@@ -16,7 +16,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Camera, Upload, Send, User, List } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { api } from '@/lib/api';
 import { geraStringAleatoria } from '@/lib/geraStringAleatoria';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -24,6 +23,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Person } from "../PersonList/page";
 import { Suspense } from 'react';
+import { request } from "@/services/request-api/request";
 
 const personSchema = z.object({
     nome: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
@@ -302,23 +302,21 @@ function PersonRegisterContent() {
                     ID_CPMA_UNIDADE: JSON.parse(sessionStorage.getItem('cpma_unidade') || '{"id": "1"}').id,
                 };
                 try {
-                    await api.put(`api/pessoa`, payload).then((response) => {
+                    await request.put(`api/pessoa`, payload).then((response) => {
                         setOpenL(false);
-                        if (response.data.status !== 1) {
+                        if (response.status !== 200) {
                             toast.info("Erro ao atualizado pessoa");
-                            throw new Error('Erro ao atualizado pessoa');
                         } else {
                             setOpenL(false);
                             toast.info("Cadastro atualizado");
                         }
                     }).catch(() => {
                         setOpenL(false);
-                        toast.info("Erro ao atualizado pessoa");
-                        throw new Error('Erro ao cadastrar pessoa');
+                        toast.info("Erro ao atualizar pessoa");
                     });
                 } catch (e) {
                     setOpenL(false);
-                    toast.info("Erro ao atualizado pessoa");
+                    toast.info("Erro ao atualizar pessoa");
                     console.error("Erro ao parsear sessionStorage user:", e);
                 }
 
@@ -351,8 +349,8 @@ function PersonRegisterContent() {
                     ID_CPMA_UNIDADE: JSON.parse(sessionStorage.getItem('cpma_unidade') || '{"id": "1"}').id,
                 };
 
-                await api.post(`api/pessoa`, payload).then((response) => {
-                    if (response.data.status !== 1) {
+                await request.post(`api/pessoa`, payload).then((response) => {
+                    if (response.status !== 200) {
                         setOpenL(false);
                         toast.info("Erro ao cadastrar pessoa");
                         throw new Error('Erro ao cadastrar pessoa');

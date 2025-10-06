@@ -15,6 +15,7 @@ import UrlParamsService from "@/urlParams/UrlParamsService";
 import { FacialReadingsResponse } from "@/types/FacialReadingsResponse";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
+import { usePathname } from "next/navigation";
 
 interface ApiResponse<T> {
     data: T;
@@ -33,7 +34,7 @@ interface FacialReading {
 }
 
 export default function FacialReviewPage() {
-    // Estados para paginação
+    const pathname = usePathname();
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(5);
     const [dateFilterStart, setDateFilterStart] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -154,6 +155,7 @@ const filteredReadings = useMemo(() => {
                 console.error(error);
         }
     }, [urlParams, userFilter]);
+
     
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -175,6 +177,13 @@ const filteredReadings = useMemo(() => {
                 toast.error("Erro ao carregar dados da empresa. Faça login novamente.");
             }
         }
+        toast.info("Carregando leituras faciais...");
+        setTimeout(() => {
+            if(pathname === '/FacialReview') {
+              getFacialReadings();
+            }
+        }, 3000);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (

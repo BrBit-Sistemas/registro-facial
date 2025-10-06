@@ -16,7 +16,7 @@ import {
   // Calendar,
   // XCircle,
   // AlertCircle,
-  History,
+  //History,
   ScanFace,
   LogOut,
   Menu,

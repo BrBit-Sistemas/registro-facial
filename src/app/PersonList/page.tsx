@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Edit, Trash2, Filter } from 'lucide-react';
+import { Plus, Search, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import Backdrop from '@mui/material/Backdrop';
@@ -27,7 +27,6 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { api } from '@/lib/api';
 
 export interface Person {
     id: string;
@@ -248,6 +247,8 @@ export default function PersonListPage() {
                 toast.error("Erro ao carregar dados da empresa. Faça login novamente.");
             }
         }
+        getPessoas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleEdit = (person: Person) => {
