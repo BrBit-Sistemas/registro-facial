@@ -11,44 +11,44 @@ import {
   Home,
   Users,
   Building2,
-  Gavel,
-  Shield,
-  Calendar,
-  XCircle,
-  AlertCircle,
-  History,
+  // Gavel,
+  // Shield,
+  // Calendar,
+  // XCircle,
+  // AlertCircle,
+  //History,
   ScanFace,
   LogOut,
   Menu,
   X,
-  ChevronDown
+ // ChevronDown
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuLabel,
+//   DropdownMenuSeparator,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu";
 
 import Link from 'next/link'
 
   const menuItems = [
     { href: '/dashboard', name: 'Dashboard', icon: Home },
+    { href: '/FacialReview', name: 'Revisão Facial', icon: ScanFace },
     { href: '/PersonList', name: 'Pessoas', icon: Users },
     { href: '/CompanyRegister', name: 'Cadastro CPMA', icon: Building2 },
-    { href: '/OccurrenceHistory', name: 'Histórico de Ocorrências', icon: History },
-    { href: '/FacialReview', name: 'Revisão Facial', icon: ScanFace },
+    //{ href: '/OccurrenceHistory', name: 'Histórico de Ocorrências', icon: History },
   ];
 
-  const auxiliaryMenuItems = [
-    { href: '/CourtRegister', name: 'Varas', icon: Gavel },
-    { href: '/RegimeRegister', name: 'Regimes Penais', icon: Shield },
-    { href: '/FrequencyTypeRegister', name: 'Tipos de Frequência', icon: Calendar },
-    { href: '/ClosureReasonRegister', name: 'Motivos de Encerramento', icon: XCircle },
-    { href: '/OccurrenceTypeRegister', name: 'Tipos de Ocorrência', icon: AlertCircle },
-  ];
+  // const auxiliaryMenuItems = [
+  //   { href: '/CourtRegister', name: 'Varas', icon: Gavel },
+  //   { href: '/RegimeRegister', name: 'Regimes Penais', icon: Shield },
+  //   { href: '/FrequencyTypeRegister', name: 'Tipos de Frequência', icon: Calendar },
+  //   { href: '/ClosureReasonRegister', name: 'Motivos de Encerramento', icon: XCircle },
+  //   { href: '/OccurrenceTypeRegister', name: 'Tipos de Ocorrência', icon: AlertCircle },
+  // ];
 
 export default function DashboardLayout({
   children,
@@ -81,13 +81,13 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-background ">
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-sidebar transition-transform duration-smooth ${
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white transition-transform duration-smooth rounded-lg border shadow-sm ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } lg:translate-x-0`}>
-        <div className="flex h-full flex-col ">
+        <div className="flex h-full flex-col relative w-full transform rounded-lg bg-gradient-to-r text-blue-700 border-blue-700 shadow-md transition-all duration-300 hover:shadow-lg disabled:opacity-70">
           {/* Logo */}
-          <div className="flex h-16 items-center justify-between px-4 bg-gradient-to-br from-background via-secondary to-background border-b border-sidebar-border">
-            <div className="h-40 w-40 rounded-full flex items-center justify-center text-primary font-bold">
+          <div className="flex h-16 items-center justify-between px-4 from-background via-secondary to-background border-b">
+            <div className="h-40 w-40 rounded-full flex items-center justify-center">
               <Image src="/logo-1920x570.png" alt="Logo" width={100} height={50} className="w-100" />
             </div>
             <button
@@ -121,7 +121,7 @@ export default function DashboardLayout({
             })}
 
             {/* Auxiliary Registers Dropdown */}
-            <DropdownMenu>
+            {/* <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors">
                   <Shield className="h-5 w-5" />
@@ -146,7 +146,7 @@ export default function DashboardLayout({
                   );
                 })}
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu> */}
           </nav>
 
           {/* User info */}
@@ -172,7 +172,7 @@ export default function DashboardLayout({
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Top bar */}
-        <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-border bg-background px-4 lg:px-6">
+        <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-border bg-background px-4 lg:px-6 ">
           <button
             onClick={() => setIsSidebarOpen(true)}
             className="lg:hidden"

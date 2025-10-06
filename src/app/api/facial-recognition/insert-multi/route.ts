@@ -20,6 +20,7 @@ interface UserData {
   SpecialDaysSchedule: number[];
   ValidFrom: string;
   ValidTo: string;
+  ipFacial: string;
 }
 
 interface RequestData {
@@ -129,28 +130,14 @@ class DeviceAPIService {
     return `Digest username="${this.username}", realm="${realm}", nonce="${nonce}", uri="${uri}", response="${responseHash}", algorithm="${algorithm}"${opaque ? `, opaque="${opaque}"` : ''}${qop ? `, qop="${qop}", nc="${nc}", cnonce="${cnonce}"` : ''}`;
   }
 
-  // Método para debug detalhado
-  private debugRequestDetails(url: string, headers: Record<string, string>, body: string): void {
-    console.log('🔍 Request Details:');
-    console.log('URL:', url);
-    console.log('Method: POST');
-    console.log('Headers:', JSON.stringify(headers, null, 2));
-    console.log('Body length:', body.length);
-    console.log('Body preview (first 200 chars):', body.substring(0, 200));
-    
-    // Log completo se for pequeno
-    if (body.length < 1000) {
-      console.log('Full body:', body);
-    }
-  }
-
   async insertMultiUsers(userList: UserData[]): Promise<string> {
+    const deviceIp = userList[0].ipFacial;
+    this.deviceBaseUrl = `${deviceIp}`;
     try {
-      console.log(`🚀 Attempting to insert ${userList.length} users to device at: ${this.deviceBaseUrl}`);
+      const formattedJson = JSON.stringify({ UserList: userList }, null, 4);
       
       // Modo desenvolvimento - simular se não conseguir conectar
       if (this.deviceBaseUrl.includes('localhost')) {
-        console.log('🔧 Simulating device API call (development mode)');
         await new Promise(resolve => setTimeout(resolve, 500));
         return "OK\r\n";
       }
@@ -160,21 +147,6 @@ class DeviceAPIService {
 
       // Criar header de autenticação
       const authHeader = await this.createAuthHeader('POST', endpoint);
-
-      console.log(`📤 Sending to: ${url}`);
-      console.log(`🔐 Auth header: ${authHeader.substring(0, 100)}...`);
-
-      // Preparar dados no formato exato do Postman
-      const formattedJson = JSON.stringify({ UserList: userList }, null, 4);
-
-      console.log('📦 Request data (formatted):', formattedJson);
-
-      // Debug detalhado
-      this.debugRequestDetails(url, {
-        'Authorization': authHeader,
-        'Content-Type': 'application/json',
-        'User-Agent': 'NextJS-Access-User/1.0'
-      }, formattedJson);
 
       // Tentar formato JSON
       try {
@@ -190,16 +162,12 @@ class DeviceAPIService {
         });
 
         const responseText = await response.text();
-        console.log(`📥 Response: ${response.status} ${response.statusText}`);
-        console.log(`📝 Response body: ${responseText}`);
 
         if (response.status === 400) {
-          console.log('⚠️ Bad Request - verificando possíveis issues...');
           const responseHeaders: Record<string, string> = {};
           response.headers.forEach((value, key) => {
             responseHeaders[key] = value;
           });
-          console.log('Response headers:', responseHeaders);
         }
 
         if (response.status === 401) {
@@ -213,16 +181,13 @@ class DeviceAPIService {
         return responseText;
 
       } catch (error) {
-        console.error('❌ Error calling device API:', error);
         throw new Error(`Failed to insert users: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
 
     } catch (error) {
-      console.error('❌ Error in insertMultiUsers:', error);
       
       // Modo desenvolvimento - simular sucesso
       if (process.env.NODE_ENV === 'development') {
-        console.log('🎭 Returning simulated success response for development');
         return "OK\r\n";
       }
       
@@ -230,13 +195,13 @@ class DeviceAPIService {
     }
   }
 
-  async checkDeviceStatus(): Promise<boolean> {
+  async checkDeviceStatus(ipFacial: string): Promise<boolean> {
+    const deviceIp = ipFacial;
+    this.deviceBaseUrl = `${deviceIp}`;
     try {
-      console.log(`🔍 Checking device status at: ${this.deviceBaseUrl}`);
       
       // Modo desenvolvimento
       if (this.deviceBaseUrl.includes('localhost')) {
-        console.log('🔧 Simulating device online status (development mode)');
         return true;
       }
 
@@ -340,8 +305,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const requestData: RequestData = body;
 
-    console.log(`👥 Processing request to insert ${requestData.UserList.length} users`);
-
     // Validação
     const validation = validationService.validateUserData(requestData.UserList);
     if (!validation.isValid) {
@@ -361,8 +324,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar dispositivo
-    const deviceStatus = await deviceAPIService.checkDeviceStatus();
-    console.log(`📡 Device status: ${deviceStatus ? 'Online' : 'Offline'}`);
+    const deviceStatus = await deviceAPIService.checkDeviceStatus(requestData.UserList[0].ipFacial);
     
     if (!deviceStatus && process.env.NODE_ENV !== 'development') {
       return NextResponse.json(
@@ -383,22 +345,19 @@ export async function POST(request: NextRequest) {
       insertedCount: requestData.UserList.length
     };
 
-    console.log('✅ Insert completed successfully');
     return NextResponse.json(response);
 
   } catch (error) {
-    console.error('❌ Error:', error);
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('🎭 Returning simulated success for development');
-      const simulatedResponse = {
-        status: 'success',
-        message: 'Users inserted successfully (simulated - development mode)',
-        deviceResponse: "OK",
-        timestamp: new Date().toISOString(),
-        insertedCount: 4
-      };
-      return NextResponse.json(simulatedResponse);
+    
+      return NextResponse.json(
+        { 
+          error: 'Internal server error',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        },
+        { status: 500 }
+      );
     }
     
     return NextResponse.json(

@@ -10,6 +10,7 @@ interface UserInfo {
 }
 
 interface RequestData {
+  ipFacial: string;
   UserID: string;
   Info: UserInfo;
 }
@@ -123,12 +124,6 @@ class DeviceAPIService {
 
   // Método para debug detalhado
   private debugRequestDetails(url: string, headers: Record<string, string>, body: string): void {
-    console.log('🔍 Request Details:');
-    console.log('URL:', url);
-    console.log('Method: POST');
-    console.log('Headers:', JSON.stringify(headers, null, 2));
-    console.log('Body length:', body.length);
-    console.log('Body preview (first 200 chars):', body.substring(0, 200));
     
     // Log completo se for pequeno
     if (body.length < 1000) {
@@ -139,9 +134,6 @@ class DeviceAPIService {
   // Método alternativo para formato simples
   private async trySimpleFormat(url: string, authHeader: string, userId: string, userInfo: UserInfo): Promise<string> {
     const simpleData = `UserID=${userId}&UserName=${encodeURIComponent(userInfo.UserName)}`;
-    
-    console.log('🔄 Trying simple form format...');
-    console.log('Simple form data:', simpleData);
     
     const response = await fetch(url, {
       method: 'POST',
@@ -155,19 +147,16 @@ class DeviceAPIService {
     });
 
     const responseText = await response.text();
-    console.log(`📥 Simple format response: ${response.status} ${response.statusText}`);
-    console.log(`📝 Response body: ${responseText}`);
 
     return responseText;
   }
 
-  async updateFacialData(userId: string, userInfo: UserInfo): Promise<string> {
+  async updateFacialData(ipFacial: string, userId: string, userInfo: UserInfo): Promise<string> {
+    this.deviceBaseUrl = `${ipFacial}`;
     try {
-      console.log(`🚀 Attempting to update device at: ${this.deviceBaseUrl}`);
       
       // Modo desenvolvimento - simular se não conseguir conectar
       if (this.deviceBaseUrl.includes('localhost')) {
-        console.log('🔧 Simulating device API call (development mode)');
         await new Promise(resolve => setTimeout(resolve, 500));
         return "OK\r\n";
       }
@@ -177,9 +166,6 @@ class DeviceAPIService {
 
       // Criar header de autenticação
       const authHeader = await this.createAuthHeader('POST', endpoint);
-
-      console.log(`📤 Sending to: ${url}`);
-      console.log(`🔐 Auth header: ${authHeader.substring(0, 100)}...`);
 
       // Garantir que PhotoData seja um array
       if (userInfo.PhotoData && !Array.isArray(userInfo.PhotoData)) {
@@ -192,8 +178,6 @@ class DeviceAPIService {
         : '';
 
       const formattedJson = `{ \r\n   "UserID":"${userId}",\r\n   "Info":{ \r\n      "UserName":"${userInfo.UserName}",\r\n      "PhotoData":[${photoDataString}]          \t\t\t\r\n   }\r\n}`;
-
-      console.log('📦 Request data (formatted):', formattedJson);
 
       // Debug detalhado
       this.debugRequestDetails(url, {
@@ -216,16 +200,12 @@ class DeviceAPIService {
         });
 
         const responseText = await response.text();
-        console.log(`📥 Response: ${response.status} ${response.statusText}`);
-        console.log(`📝 Response body: ${responseText}`);
 
         if (response.status === 400) {
-          console.log('⚠️ Bad Request - verificando possíveis issues...');
           const responseHeaders: Record<string, string> = {};
           response.headers.forEach((value, key) => {
             responseHeaders[key] = value;
           });
-          console.log('Response headers:', responseHeaders);
         }
 
         if (response.status === 401) {
@@ -249,7 +229,6 @@ class DeviceAPIService {
       
       // Modo desenvolvimento - simular sucesso
       if (process.env.NODE_ENV === 'development') {
-        console.log('🎭 Returning simulated success response for development');
         return "OK\r\n";
       }
       
@@ -257,13 +236,11 @@ class DeviceAPIService {
     }
   }
 
-  async checkDeviceStatus(): Promise<boolean> {
+  async checkDeviceStatus(ipFacial: string): Promise<boolean> {
     try {
-      console.log(`🔍 Checking device status at: ${this.deviceBaseUrl}`);
-      
+      this.deviceBaseUrl = `${ipFacial}`;
       // Modo desenvolvimento
       if (this.deviceBaseUrl.includes('localhost')) {
-        console.log('🔧 Simulating device online status (development mode)');
         return true;
       }
 
@@ -314,24 +291,12 @@ class ValidationService {
     };
   }
 
-//   async userExists(userId: string): Promise<boolean> {
-//     // Simular consulta ao banco de dados
-//     await new Promise(resolve => setTimeout(resolve, 100));
-//     return userDatabase.has(userId);
-//   }
-
-//   async getUserInfo(userId: string): Promise<any> {
-//     // Simular consulta ao banco de dados
-//     await new Promise(resolve => setTimeout(resolve, 100));
-//     return userDatabase.get(userId);
-//   }
 }
 
 // Serviço de processamento de dados biométricos
 class BiometricProcessor {
   async processBiometricUpdate(userId: string, userInfo: UserInfo): Promise<void> {
     try {
-      console.log(`Processing biometric update for user ${userId}`);
       
       // Garantir que PhotoData seja um array
       if (userInfo.PhotoData && !Array.isArray(userInfo.PhotoData)) {
@@ -339,14 +304,8 @@ class BiometricProcessor {
       }
 
       if (userInfo.PhotoData && userInfo.PhotoData.length > 0) {
-        console.log(`Found ${userInfo.PhotoData.length} photo data entries`);
         await this.processPhotoData(userInfo.PhotoData);
-        console.log('Photo data processed successfully');
       }
-
-      const updateTimestamp = new Date().toISOString();
-      console.log(`Biometric update timestamp: ${updateTimestamp}`);
-      await this.logUpdate(userId, userInfo.UserName);
 
     } catch (error) {
       console.error('Error processing biometric data:', error);
@@ -361,10 +320,6 @@ class BiometricProcessor {
       timestamp: new Date().toISOString(),
       status: 'processed'
     };
-  }
-
-  private async logUpdate(userId: string, userName: string): Promise<void> {
-    console.log(`Biometric update logged - UserID: ${userId}, UserName: ${userName}, Time: ${new Date().toISOString()}`);
   }
 }
 
@@ -385,9 +340,7 @@ export async function POST(request: NextRequest) {
     }
 
     const requestData: RequestData = JSON.parse(jsonData);
-    const { UserID, Info } = requestData;
-
-    console.log(`👤 Processing request for UserID: ${UserID}`);
+    const { ipFacial, UserID, Info } = requestData;
 
     // Validação
     const validation = validationService.validateUserData(UserID, Info);
@@ -398,20 +351,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // const userExists = await validationService.userExists(UserID);
-    // if (!userExists) {
-    //   return NextResponse.json(
-    //     { error: `User with ID ${UserID} not found` },
-    //     { status: 404 }
-    //   );
-    // }
 
     // Processamento biométrico
     await biometricProcessor.processBiometricUpdate(UserID, Info);
 
     // Verificar dispositivo
-    const deviceStatus = await deviceAPIService.checkDeviceStatus();
-    console.log(`📡 Device status: ${deviceStatus ? 'Online' : 'Offline'}`);
+    const deviceStatus = await deviceAPIService.checkDeviceStatus(ipFacial);
     
     if (!deviceStatus && process.env.NODE_ENV !== 'development') {
       return NextResponse.json(
@@ -421,7 +366,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Chamada para o dispositivo
-    const deviceResponse = await deviceAPIService.updateFacialData(UserID, Info);
+    const deviceResponse = await deviceAPIService.updateFacialData(ipFacial,UserID, Info);
     
     // Resposta de sucesso
     const response = {
@@ -433,23 +378,19 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     };
 
-    console.log('✅ Update completed successfully');
     return NextResponse.json(response);
 
   } catch (error) {
-    console.error('❌ Error:', error);
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('🎭 Returning simulated success for development');
-      const simulatedResponse = {
-        status: 'success',
-        message: 'Facial biometric data updated successfully (simulated - development mode)',
-        userID: '16',
-        userName: 'Alexandre16',
-        deviceResponse: "OK",
-        timestamp: new Date().toISOString()
-      };
-      return NextResponse.json(simulatedResponse);
+      
+      return NextResponse.json(
+        { 
+          error: 'Internal server error',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        },
+        { status: 500 }
+      );
     }
     
     return NextResponse.json(

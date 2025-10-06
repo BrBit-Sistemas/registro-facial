@@ -26,13 +26,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={inter.className}>
         <AuthProvider>
             <div className="flex min-h-screen">
-             <div className="w-full bg-gray-2 dark:bg-[#FFF]">
+             <div className="w-full bg-[#fff] dark:bg-gray-600 dark:text-[#fff]">
               <main className="isolate mx-auto w-full overflow-hidden ">
                {children}
               </main>
               </div> 
             </div>
-        <Toaster />
+        <Toaster
+          position='top-right'
+          closeButton
+        />
         </AuthProvider> 
       </body>
     </html>

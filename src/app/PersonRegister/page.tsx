@@ -14,9 +14,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Camera, Upload, Send, User, List } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { api } from '@/lib/api';
 import { geraStringAleatoria } from '@/lib/geraStringAleatoria';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -24,6 +23,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Person } from "../PersonList/page";
 import { Suspense } from 'react';
+import { request } from "@/services/request-api/request";
 
 const personSchema = z.object({
     nome: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
@@ -107,8 +107,6 @@ const tipoFrequenciaList = [
     { value: '365', label: '365 - Anual' },
 ];
 
-
-
 type PersonFormData = z.infer<typeof personSchema>;
 
 function RenderSelect({
@@ -131,7 +129,9 @@ function RenderSelect({
     return (
         <div className="space-y-2 ">
             <Label htmlFor={name}>{label}</Label>
-            <Select value={value} onValueChange={(newValue) => {
+            <Select
+                
+               value={value} onValueChange={(newValue) => {
                 // Ignorar onValueChange com string vazia se já temos um valor
                 if (newValue === "" && value && value !== "") {
                     return;
@@ -201,68 +201,73 @@ function PersonRegisterContent() {
         }
     });
 
-     useEffect(() => {
+    function convertBufferToDataURLSafe(bufferObj: { type: string; data: number[] }): string {
+        const dataPhoto = bufferObj?.data ? bufferObj?.data : "";
+        try {
+            const dataURL = Buffer.from(dataPhoto).toString('utf8');
+            return dataURL;
+
+        } catch (error) {
+            console.error('Erro na conversão:', error);
+            return '';
+        }
+    }
+
+    useEffect(() => {
         if (typeof window !== "undefined") {
             const editingPerson = sessionStorage.getItem("editingPerson");
             if (editingPerson) {
-            try {
-                const parsed = JSON.parse(editingPerson);
-                personToEdit.current = parsed;
-                
-                // Reset do formulário com os dados da pessoa
-                if (editMode && parsed) {
-                    const formData = {
-                        nome: parsed.nome || '',
-                        cpf: parsed.cpf?.replace(/\W/g, '') || '',
-                        rg: parsed.rg?.replace(/\W/g, '') || '',
-                        dataNascimento: parsed.dataNascimento || '',
-                        sexo: parsed.sexo || '',
-                        vara: parsed.vara || '',
-                        regime: parsed.regime || '',
-                        naturalidade: parsed.Naturalidade || '',
-                        nacionalidade: parsed.Nacionalidade || 'Brasileira',
-                        nomePai: parsed.Nome_Pai || '',
-                        nomeMae: parsed.Nome_Mae || '',
-                        cidade: parsed.cidade || '',
-                        uf: parsed.uf || '',
-                        contato1: parsed.Contato_1 || '',
-                        contato2: parsed.Contato_2 || '',
-                        processo: parsed.processo || '',
-                        motivoEncerramento: parsed.Motivo_Encerramento || '',
-                        dadosAdicionais: parsed.Dados_Adicionais || '',
-                        idFacial: parsed.idFacial || '',
-                        tipo_frequencia: parsed.tipo_frequencia || '',
-                        foto: parsed.Foto || null,
-                    };
-                    
-                    reset(formData);
-                    
-                    // Garantir que os campos de seleção sejam definidos
-                    if (parsed.sexo) setValue('sexo', parsed.sexo);
-                    if (parsed.vara) setValue('vara', parsed.vara);
-                    if (parsed.regime) setValue('regime', parsed.regime);
-                    if (parsed.uf) setValue('uf', parsed.uf);
-                    if (parsed.tipo_frequencia) setValue('tipo_frequencia', parsed.tipo_frequencia);
-                    
-                    setIsActive(parsed.isActive || false);
-                    setCapturedImage(parsed.Foto || null);
+                try {
+                    const parsed = JSON.parse(editingPerson);
+                    personToEdit.current = parsed;
+
+                    // Reset do formulário com os dados da pessoa
+                    if (editMode && parsed) {
+                        const formData = {
+                            nome: parsed.nome || '',
+                            cpf: parsed.cpf?.replace(/\W/g, '') || '',
+                            rg: parsed.rg?.replace(/\W/g, '') || '',
+                            dataNascimento: parsed.dataNascimento || '',
+                            sexo: parsed.sexo || '',
+                            vara: parsed.vara || '',
+                            regime: parsed.regime || '',
+                            naturalidade: parsed.Naturalidade || '',
+                            nacionalidade: parsed.Nacionalidade || 'Brasileira',
+                            nomePai: parsed.Nome_Pai || '',
+                            nomeMae: parsed.Nome_Mae || '',
+                            cidade: parsed.cidade || '',
+                            uf: parsed.uf || '',
+                            contato1: parsed.Contato_1 || '',
+                            contato2: parsed.Contato_2 || '',
+                            processo: parsed.processo || '',
+                            motivoEncerramento: parsed.Motivo_Encerramento || '',
+                            dadosAdicionais: parsed.Dados_Adicionais || '',
+                            idFacial: parsed.idFacial || '',
+                            tipo_frequencia: parsed.tipo_frequencia || '',
+                            foto: parsed.Foto || null,
+                        };
+
+                        reset(formData);
+
+                        // Garantir que os campos de seleção sejam definidos
+                        if (parsed.sexo) setValue('sexo', parsed.sexo);
+                        if (parsed.vara) setValue('vara', parsed.vara);
+                        if (parsed.regime) setValue('regime', parsed.regime);
+                        if (parsed.uf) setValue('uf', parsed.uf);
+                        if (parsed.tipo_frequencia) setValue('tipo_frequencia', parsed.tipo_frequencia);
+
+                        const dataPhoto = convertBufferToDataURLSafe(parsed.Foto || null);
+
+                        setIsActive(parsed.isActive || false);
+                        setCapturedImage(dataPhoto);
+                    }
+                } catch (e) {
+                    console.error("Erro ao parsear editingPerson:", e);
                 }
-            } catch (e) {
-                console.error("Erro ao parsear editingPerson:", e);
-            }
             }
 
-            const stored = sessionStorage.getItem("user");
-            if (stored) {
-            try {
-                // const parsed = JSON.parse(stored);
-                // setServiceIp(parsed.service_ip || "");
-            } catch (e) {
-                console.error("Erro ao parsear sessionStorage user:", e);
-            }
-            }
         }
-    },[editMode, reset, setValue, watch]);
+    }, [editMode, reset, setValue, watch]);
 
 
     const onSubmit = async (data: PersonFormData) => {
@@ -296,30 +301,24 @@ function PersonRegisterContent() {
                     ID_usuario: JSON.parse(sessionStorage.getItem('user') || '{}').id,
                     ID_CPMA_UNIDADE: JSON.parse(sessionStorage.getItem('cpma_unidade') || '{"id": "1"}').id,
                 };
-                
-                await api.put(`api/pessoa`, payload).then((response) => {
-                    setOpenL(false);
-                    if (response.data.status !== 1) {
-                        toast({
-                            title: "Erro ao cadastrar pessoa",
-                            description: response.data.message,
-                        });
-                        throw new Error('Erro ao cadastrar pessoa');
-                    } else {
+                try {
+                    await request.put(`api/pessoa`, payload).then((response) => {
                         setOpenL(false);
-                        toast({
-                            title: "Cadastro atualizado",
-                            description: "Pessoa atualizada com sucesso!",
-                        });
-                    }
-                }).catch(() => {
-                    setOpenL(false);
-                    toast({
-                        title: "Erro ao cadastrar pessoa",
-                        description: "Ocorreu um erro inesperado",
+                        if (response.status !== 200) {
+                            toast.info("Erro ao atualizado pessoa");
+                        } else {
+                            setOpenL(false);
+                            toast.info("Cadastro atualizado");
+                        }
+                    }).catch(() => {
+                        setOpenL(false);
+                        toast.info("Erro ao atualizar pessoa");
                     });
-                    throw new Error('Erro ao cadastrar pessoa');
-                });
+                } catch (e) {
+                    setOpenL(false);
+                    toast.info("Erro ao atualizar pessoa");
+                    console.error("Erro ao parsear sessionStorage user:", e);
+                }
 
             } else {
                 const payload = {
@@ -349,39 +348,26 @@ function PersonRegisterContent() {
                     ID_usuario: JSON.parse(sessionStorage.getItem('user') || '{}').id,
                     ID_CPMA_UNIDADE: JSON.parse(sessionStorage.getItem('cpma_unidade') || '{"id": "1"}').id,
                 };
-                
-                await api.post(`api/pessoa`, payload).then((response) => {
-                    if (response.data.status !== 1) {
+
+                await request.post(`api/pessoa`, payload).then((response) => {
+                    if (response.status !== 200) {
                         setOpenL(false);
-                        toast({
-                            title: "Erro ao cadastrar pessoa",
-                            description: response.data.message,
-                        });
+                        toast.info("Erro ao cadastrar pessoa");
                         throw new Error('Erro ao cadastrar pessoa');
                     } else {
                         setOpenL(false);
-                        toast({
-                            title: "Cadastro realizado",
-                            description: "Pessoa cadastrada com sucesso!",
-                        });
+                        toast.info("Cadastro realizado");
                     }
                 }).catch(() => {
                     setOpenL(false);
-                    toast({
-                        title: "Erro ao cadastrar pessoa",
-                        description: "Ocorreu um erro inesperado",
-                    });
+                    toast.info("Erro ao cadastrar pessoa");
                     throw new Error('Erro ao cadastrar pessoa');
                 });
             }
             router.push('/PersonList');
         } catch {
             setOpenL(false);
-            toast({
-                title: "Erro no cadastro",
-                description: "Erro ao cadastrar pessoa",
-                variant: "destructive"
-            });
+            toast.info("Erro no cadastro");
         }
     };
 
@@ -390,10 +376,7 @@ function PersonRegisterContent() {
         if (imageSrc) {
             setCapturedImage(imageSrc);
             setShowWebcam(false);
-            toast({
-                title: "Foto capturada",
-                description: "Foto capturada com sucesso!",
-            });
+            toast.success("Foto capturada com sucesso!");
         }
     };
 
@@ -403,61 +386,59 @@ function PersonRegisterContent() {
             const reader = new FileReader();
             reader.onloadend = () => {
                 setCapturedImage(reader.result as string);
-                toast({
-                    title: "Foto carregada",
-                    description: "Foto carregada com sucesso!",
-                });
+                toast.success("Foto carregada com sucesso!");
             };
             reader.readAsDataURL(file);
         }
     };
 
     async function adicionarUsuario() {
-  
-       const jsonPayload = {
-        UserList: [
-            {
-            UserID: watch('idFacial'),
-            UserName: watch('nome'),
-            UserType: 0,
-            UseTime: 200,
-            IsFirstEnter: false,
-            FirstEnterDoors: [0, 1],
-            UserStatus: 0,
-            Authority: 1,
-            CitizenIDNo: "123456789012345678",
-            Password: watch('idFacial'),
-            Doors: [0],
-            TimeSections: [255],
-            SpecialDaysSchedule: [255],
-            ValidFrom: "2019-01-02 00:00:00",
-            ValidTo: "2037-01-02 01:00:00"
-            }
-        ]
+        const ipFacial = JSON.parse(sessionStorage.getItem('cpma_unidade') || '{"ip_facial": "http://localhost"}').ip_facial
+
+        if (!watch('idFacial')) {
+            toast.info("Salve o cadastro para gerar um ID Facial antes de enviar a foto!");
+            return;
+        }
+        
+        const jsonPayload = {
+            UserList: [
+                {
+                    UserID: watch('idFacial'),
+                    UserName: watch('nome'),
+                    UserType: 0,
+                    UseTime: 200,
+                    IsFirstEnter: false,
+                    FirstEnterDoors: [0, 1],
+                    UserStatus: 0,
+                    Authority: 1,
+                    CitizenIDNo: "123456789012345678",
+                    Password: watch('idFacial'),
+                    Doors: [0],
+                    TimeSections: [255],
+                    SpecialDaysSchedule: [255],
+                    ValidFrom: "2019-01-02 00:00:00",
+                    ValidTo: "2037-01-02 01:00:00",
+                    ipFacial: ipFacial
+                }
+            ]
         };
 
         try {
-        const response = await fetch("/api/facial-recognition/insert-multi", {
-            method: "POST",
-            headers: {
-            "Content-Type": "application/json", // 👈 importante
-            },
-            body: JSON.stringify(jsonPayload), // 👈 precisa serializar
-        });
+            const response = await fetch("/api/facial-recognition/insert-multi", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json", // 👈 importante
+                },
+                body: JSON.stringify(jsonPayload), // 👈 precisa serializar
+            });
 
-        if (!response.ok) {
-            setOpenL(false);
-            
-            toast({
-                title: "Foto carregada",
-                description: "Foto enviada com sucesso!",
-            });
-            return;
-        }
-            toast({
-                title: "Foto carregada",
-                description: "Foto enviada com sucesso!",
-            });
+            if (!response.ok) {
+                setOpenL(false);
+
+                toast.info("Error, foto não foi enviada!");
+                return;
+            }
+            toast.success("Cadastro enviado com sucesso!");
             const resultado = response;
             return resultado;
 
@@ -469,13 +450,20 @@ function PersonRegisterContent() {
     }
 
     async function adicionarFotoUsuario() {
+        const ipFacial = JSON.parse(sessionStorage.getItem('cpma_unidade') || '{"ip_facial": "http://localhost"}').ip_facial
         const formData = new FormData();
-  
+        
+        if (!watch('idFacial')) {
+            toast.info("Salve o cadastro para gerar um ID Facial antes de enviar a foto");
+            return;
+        }
+
         const jsonPayload = {
+            ipFacial: ipFacial,
             UserID: watch('idFacial'),
             Info: {
-            UserName: watch('nome'),
-            PhotoData: capturedImage?.replace(/^data:image\/\w+;base64,/, '')
+                UserName: watch('nome'),
+                PhotoData: capturedImage?.replace(/^data:image\/\w+;base64,/, '')
             }
         };
 
@@ -483,28 +471,23 @@ function PersonRegisterContent() {
 
         try {
             const response = await fetch('/api/facial-recognition/update', {
-            method: 'POST',
-            body: formData
-        });
+                method: 'POST',
+                body: formData
+            });
 
-        if (!response.ok) {
-            setOpenL(false);
-            
-            toast({
-                title: "Foto carregada",
-                description: "Foto enviada com sucesso!",
-            });
-            return;
-        }
-            toast({
-                title: "Foto carregada",
-                description: "Foto enviada com sucesso!",
-            });
+            if (!response.ok) {
+                setOpenL(false);
+
+                toast.info("Foto não enviada!");
+                return;
+            }
+            toast.success("Foto enviada com sucesso!");
             const resultado = response;
             return resultado;
 
         } catch (err) {
             setOpenL(false);
+            toast.info("Foto não enviada!");
             console.error('Falha na requisição:', err);
             throw err;
         }
@@ -513,42 +496,27 @@ function PersonRegisterContent() {
     const sendToFacialReader = async () => {
 
         if (!watch('idFacial')) {
-            toast({
-                title: "Erro",
-                description: "Salve o cadastro para gerar um ID Facial antes de enviar a foto",
-                variant: "destructive"
-            });
+            toast.info("Salve o cadastro para gerar um ID Facial antes de enviar a foto");
             return;
         }
 
         setOpenL(true);
         if (!capturedImage) {
             setOpenL(false);
-            toast({
-                title: "Erro",
-                description: "Capture ou carregue uma foto primeiro",
-                variant: "destructive"
-            });
+            toast.info("Capture ou carregue uma foto primeiro");
             return;
         }
         await adicionarUsuario();
         await adicionarFotoUsuario();
         //await liberarUsuario();
         setOpenL(false);
-        toast({
-            title: "Enviado",
-            description: "Foto enviada para o leitor facial com sucesso!",
-        });
-        toast({
-            title: "Enviando...",
-            description: "Dados enviados para o leitor facial",
-        });
+        toast.success("Foto enviada para o leitor facial com sucesso!");
     };
 
     const viewList = () => {
-     sessionStorage.removeItem('editingPerson');
-     personToEdit.current = null;
-     router.push('/PersonList')
+        sessionStorage.removeItem('editingPerson');
+        personToEdit.current = null;
+        router.push('/PersonList')
     }
 
     return (
@@ -565,7 +533,6 @@ function PersonRegisterContent() {
                     </div>
                     <Button
                         type="button"
-                        variant="outline"
                         onClick={() => viewList()}
                         className="bg-gradient-primary text-white hover:opacity-90"
                     >
@@ -585,7 +552,7 @@ function PersonRegisterContent() {
                                 <Checkbox
                                     id="ativo"
                                     checked={isActive}
-                                    onCheckedChange={(checked) => setIsActive(checked as boolean)}
+                                    onCheckedChange={(checked: boolean | "indeterminate") => setIsActive(checked as boolean)}
                                 />
                                 <Label htmlFor="ativo">Pessoa Ativa</Label>
                             </div>
@@ -753,7 +720,6 @@ function PersonRegisterContent() {
                             <div className="flex gap-4">
                                 <Button
                                     type="button"
-                                    variant="outline"
                                     onClick={() => setShowWebcam(!showWebcam)}
                                     className="bg-gradient-primary text-white hover:opacity-90"
                                 >
@@ -762,7 +728,6 @@ function PersonRegisterContent() {
                                 </Button>
                                 <Button
                                     type="button"
-                                    variant="outline"
                                     onClick={() => fileInputRef.current?.click()}
                                     className="bg-gradient-primary text-white hover:opacity-90"
                                 >
@@ -778,7 +743,6 @@ function PersonRegisterContent() {
                                 />
                                 <Button
                                     type="button"
-                                    variant="secondary"
                                     onClick={sendToFacialReader}
                                     className="flex items-center gap-2 ml-auto bg-gradient-primary text-white hover:opacity-90"
                                 >
@@ -829,7 +793,6 @@ function PersonRegisterContent() {
                         }
                         <Button
                             type="button"
-                            variant="outline"
                             className="bg-gradient-primary bg-gradient-primary text-white hover:opacity-90"
                             onClick={() => viewList()}
                         >

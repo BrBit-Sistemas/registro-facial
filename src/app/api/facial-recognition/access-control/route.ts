@@ -141,8 +141,8 @@ class DeviceAPIService {
       const response = await fetch(url, options);
       const responseText = await response.text();
 
-      console.log(`📥 Response: ${response.status} ${response.statusText}`);
-      console.log(`📝 Response body: ${responseText}`);
+      // console.log(`📥 Response: ${response.status} ${response.statusText}`);
+      // console.log(`📝 Response body: ${responseText}`);
 
       if (response.status === 401) {
         throw new Error('Authentication failed');
