@@ -203,3 +203,4 @@ Para suporte técnico ou dúvidas sobre esta release:
 
 **Versão**: X.X.X - [Status] 🚀  
 **Data**: [DATA]
+
