@@ -16,60 +16,16 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = await request.json();
-    
-    // Mapear os campos do frontend para o banco de dados
-    const insertQuery = `
-      INSERT INTO pessoas (
-        id_facial, nome_completo, cpf, rg, data_nascimento, sexo, vara, 
-        regime_penal, cidade, uf, processo, status, prontuario, naturalidade, 
-        nacionalidade, nome_pai, nome_mae, contato_1, contato_2, tipo_frequencia, 
-        motivo_encerramento, dados_adicionais, foto, id_cpma_unidade, id_usuario
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
-      RETURNING id
-    `;
-    
-    const values = [
-      body.idFacial || `FACIAL_${Date.now()}`,
-      body.Nome,
-      body.CPF,
-      body.RG,
-      body.Data_Nascimento,
-      body.Sexo,
-      body.Vara,
-      body.Regime,
-      body.Cidade,
-      body.UF,
-      body.Processo,
-      body.Status || 'Ativo',
-      body.Prontuario || body.idFacial,
-      body.Naturalidade,
-      body.Nacionalidade,
-      body.Nome_Pai,
-      body.Nome_Mae,
-      body.Contato_1,
-      body.Contato_2,
-      body.tipo_frequencia,
-      body.Motivo_Encerramento,
-      body.Dados_Adicionais,
-      body.Foto,
-      body.ID_CPMA_UNIDADE,
-      body.ID_usuario
-    ];
-    
-    const result = await pool.query(insertQuery, values);
-    
-    return NextResponse.json({ 
-      status: 1, 
-      message: "Pessoa cadastrada com sucesso!",
-      data: { id: result.rows[0].id }
-    }, { status: 200 });
+    return NextResponse.json({
+    status: 0,
+    error: 'Empresa não encontrada'
+  }, { status: 404 });
     
   } catch (error) {
-    console.error("Erro ao cadastrar pessoa:", error);
+    console.error("Erro ao cadastrar Empresa:", error);
     return NextResponse.json({ 
       status: 0, 
-      error: 'Erro ao cadastrar pessoa',
+      error: 'Erro ao cadastrar Empresa',
       message: error instanceof Error ? error.message : 'Erro desconhecido'
     }, { status: 500 });
   }
@@ -77,7 +33,6 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   const {searchParams } = new URL(request.url);
-  const description = searchParams.get('description');
   const companyId = searchParams.get('companyId');
   
   const token = request.headers.get('authorization')?.split(' ')[1];
@@ -96,15 +51,15 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Company ID é obrigatório' }, { status: 400 });
     }
     
-    const query = `SELECT * FROM pessoas WHERE id_cpma_unidade = $1 and nome_completo like $2 order by nome_completo`;
-    const { rows } = await pool.query(query, [companyId, `%${description || ''}%`]);
+    const query = `SELECT * FROM empresa WHERE id = $1`;
+    const { rows } = await pool.query(query, [companyId]);
     const data = rows.length > 0 ? rows : [];
       
-    return NextResponse.json({ data, message: "List pessoas." }, { status: 200 });
+    return NextResponse.json({ data, message: "List empresa." }, { status: 200 });
  
     } catch (error) {
       console.error("Erro na query:", error);
-      return NextResponse.json({error: 'Failed to fetch pessoas' }, { status: 500 });
+      return NextResponse.json({error: 'Failed to fetch empresas' }, { status: 500 });
     }
 }
 

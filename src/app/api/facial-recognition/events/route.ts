@@ -115,12 +115,16 @@ class FacialRecognitionService {
    * Busca usuário pelo ID facial
    */
   static async findUserByFacialId(userId: string): Promise<User | null> {
+    try {
     const result = await pool.query(
       'SELECT id, prontuario, nome_completo, vara, regime_penal, processo FROM pessoas WHERE id_facial = $1',
       [userId]
     );
-    
-    return result.rows.length > 0 ? result.rows[0] : null;
+      return result.rows.length > 0 ? result.rows[0] : null;
+    } catch (error) {
+      console.error("Erro ao buscar usuário:", error);
+    }
+    return null;
   }
 
   /**

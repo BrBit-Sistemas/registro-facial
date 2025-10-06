@@ -131,9 +131,10 @@ class DeviceAPIService {
   }
 
   async insertMultiUsers(userList: UserData[]): Promise<string> {
+    const deviceIp = userList[0].ipFacial;
+    this.deviceBaseUrl = `${deviceIp}`;
     try {
       const formattedJson = JSON.stringify({ UserList: userList }, null, 4);
-      const ipFacial = userList[0].ipFacial;
       
       // Modo desenvolvimento - simular se não conseguir conectar
       if (this.deviceBaseUrl.includes('localhost')) {
@@ -141,16 +142,11 @@ class DeviceAPIService {
         return "OK\r\n";
       }
 
-      console.log("UserList: ", userList[0].ipFacial)
-
       const endpoint = '/cgi-bin/AccessUser.cgi?action=insertMulti';
       const url = `${this.deviceBaseUrl}${endpoint}`;
 
       // Criar header de autenticação
       const authHeader = await this.createAuthHeader('POST', endpoint);
-
-
-
 
       // Tentar formato JSON
       try {
@@ -199,7 +195,9 @@ class DeviceAPIService {
     }
   }
 
-  async checkDeviceStatus(): Promise<boolean> {
+  async checkDeviceStatus(ipFacial: string): Promise<boolean> {
+    const deviceIp = ipFacial;
+    this.deviceBaseUrl = `${deviceIp}`;
     try {
       
       // Modo desenvolvimento
@@ -307,8 +305,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const requestData: RequestData = body;
 
-    console.log(`👥 Processing request to insert ${requestData.UserList} users`);
-
     // Validação
     const validation = validationService.validateUserData(requestData.UserList);
     if (!validation.isValid) {
@@ -328,7 +324,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar dispositivo
-    const deviceStatus = await deviceAPIService.checkDeviceStatus();
+    const deviceStatus = await deviceAPIService.checkDeviceStatus(requestData.UserList[0].ipFacial);
     
     if (!deviceStatus && process.env.NODE_ENV !== 'development') {
       return NextResponse.json(
@@ -354,14 +350,14 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     
     if (process.env.NODE_ENV === 'development') {
-      const simulatedResponse = {
-        status: 'success',
-        message: 'Users inserted successfully (simulated - development mode)',
-        deviceResponse: "OK",
-        timestamp: new Date().toISOString(),
-        insertedCount: 4
-      };
-      return NextResponse.json(simulatedResponse);
+    
+      return NextResponse.json(
+        { 
+          error: 'Internal server error',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        },
+        { status: 500 }
+      );
     }
     
     return NextResponse.json(

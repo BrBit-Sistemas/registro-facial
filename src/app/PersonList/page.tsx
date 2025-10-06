@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import Backdrop from '@mui/material/Backdrop';
@@ -105,15 +105,19 @@ export default function PersonListPage() {
 
     const [openL, setOpenL] = useState(false);
 
-    const totalPages = Math.max(1, Math.ceil(filteredPeople.length / itemsPerPage));
-
     const paginatedPeople = useMemo(() => {
         const startIdx = (currentPage - 1) * itemsPerPage;
         const data = people.filter(person =>
-            (person.nome || "").toLowerCase().includes(searchTerm.toLowerCase())
+            !person ||
+            person.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            person.cpf.toLowerCase().includes(searchTerm.toLowerCase())
         );
         return data.slice(startIdx, startIdx + itemsPerPage);
     }, [currentPage, itemsPerPage, people, searchTerm]);
+
+    const totalPages = useMemo(() => {
+        return Math.max(1, Math.ceil(filteredPeople.length / itemsPerPage));
+    }, [filteredPeople.length, itemsPerPage]);
 
     const getPessoas = useCallback(async () => {
         // Verificar se o usuário está autenticado
@@ -199,7 +203,7 @@ export default function PersonListPage() {
                 })));
 
                 toast.info(
-                    "Listagem de pessoas ok!"
+                    "Listagem de pessoas!"
                 );
                 return setOpenL(false);
             } else {
@@ -221,7 +225,8 @@ export default function PersonListPage() {
 
             toast.error("Erro ao carregar lista de pessoas");
         }
-    }, [searchTerm, urlParams, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [ urlParams, router]);
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -244,19 +249,6 @@ export default function PersonListPage() {
             }
         }
     }, []);
-
-    useEffect(() => {
-        getPessoas();
-    }, [getPessoas]);
-
-    useEffect(() => {
-
-        const filtered = people.filter(person =>
-            (person.nome || "").toLowerCase().includes(searchTerm.toLowerCase())
-        );
-
-        setFilteredPeople(filtered ? filtered : []);
-    }, [searchTerm, people]);
 
     const handleEdit = (person: Person) => {
         sessionStorage.setItem("editingPerson", JSON.stringify(person));
@@ -335,15 +327,19 @@ export default function PersonListPage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="flex gap-4">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    placeholder="Buscar por nome..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-9"
-                                />
-                            </div>
+                            <Input
+                                placeholder="Buscar por nome..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="flex-1"
+                            />
+                            <Button 
+                                onClick={getPessoas}
+                                type="button"
+                                className="bg-gradient-primary bg-gradient-primary text-white hover:opacity-90">
+                                <Search className="h-4 w-4 mr-2" />
+                                Filtrar
+                            </Button>
                         </div>
 
                         <div className="rounded-md border">
@@ -362,7 +358,7 @@ export default function PersonListPage() {
                                         <option value={10}>10</option>
                                         <option value={50}>50</option>
                                         <option value={100}>100</option>
-                                    </select>
+                                    </select> 
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button
@@ -445,6 +441,12 @@ export default function PersonListPage() {
                                     )}
                                 </TableBody>
                             </Table>
+                        </div>
+                        <div className="flex items-center justify-center gap-1 p-4">
+                            <span>Itens por página:</span>
+                            <CardDescription>
+                                {paginatedPeople.length}
+                            </CardDescription>
                         </div>
                     </CardContent>
                 </Card>

@@ -1,7 +1,7 @@
 'use client';
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -12,8 +12,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Building2, Save } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { Save } from 'lucide-react';
+import { toast } from 'sonner';
+import { request } from "@/services/request-api/request";
+import UrlParamsService from "@/urlParams/UrlParamsService";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const companySchema = z.object({
     tipo: z.enum(['pf', 'pj']),
@@ -113,6 +117,9 @@ type CompanyFormData = z.infer<typeof companySchema>;
 
 export default function CompanyRegisterPage() {
     const [entityType, setEntityType] = useState<'pf' | 'pj'>('pj');
+    const urlParams = useMemo(() => new UrlParamsService(), []);
+    const [openL, setOpenL] = useState(false);
+    const idCompany = useRef('');
 
     const {
         register,
@@ -131,18 +138,61 @@ export default function CompanyRegisterPage() {
         try {
             console.log('Company data:', data);
 
-            toast({
-                title: "Cadastro realizado",
-                description: "CPMA cadastrado com sucesso!",
-            });
-        } catch (error) {
-            toast({
-                title: "Erro no cadastro",
-                description: "Erro ao cadastrar CPMA",
-                variant: "destructive"
-            });
+            toast.success("CPMA cadastrado com sucesso!");
+        } catch {
+            toast.info("Erro ao cadastrar CPMA");
         }
     };
+
+    const getCompanyData = (async () => {
+        const valueUrl = {
+            companyId: idCompany.current
+        };
+        const params = urlParams.injectUrlParams(valueUrl);
+
+        setOpenL(true);
+        try {
+                const { data, status } = await request.get( `api/company${params}`);
+                if (status === 200) {
+
+                   console.log('Company data:', data);
+                    
+                    setOpenL(false);
+
+                    toast.success("Lista de leitura biometrica!");
+                } else {
+                    setOpenL(false);
+                    toast.error("Erro ao carregar lista de leitura biometrica");
+                }
+            } catch (error) {
+                setOpenL(false);
+                console.error(error);
+        }
+    })
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            try {
+                const cpmaData = sessionStorage.getItem('cpma_unidade');
+
+                if (cpmaData) {
+                    const parsed = JSON.parse(cpmaData);
+
+                    if (parsed && parsed.id) {
+                        idCompany.current = parsed.id;
+                    } else {
+                        toast.error("Dados da empresa não encontrados. Faça login novamente.");
+                    }
+                } else {
+                    toast.error("Dados da empresa não encontrados. Faça login novamente.");
+                }
+            } catch {
+                toast.error("Erro ao carregar dados da empresa. Faça login novamente.");
+            }
+        }
+        getCompanyData();
+    }, []);
+
     return (
         <DashboardLayout>
             <div className="space-y-6">
@@ -321,6 +371,12 @@ export default function CompanyRegisterPage() {
                     </div>
                 </form>
             </div>
+            <Backdrop
+                sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 5 }}
+                open={openL}
+            >
+                <CircularProgress color="inherit" /> Carregando...
+            </Backdrop>
         </DashboardLayout>
     );
 }

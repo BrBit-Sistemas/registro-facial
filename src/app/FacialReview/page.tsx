@@ -175,9 +175,7 @@ const filteredReadings = useMemo(() => {
                 toast.error("Erro ao carregar dados da empresa. Faça login novamente.");
             }
         }
-        getFacialReadings();
-        // console.log('readings', readings);
-    }, [getFacialReadings]);
+    }, []);
 
     return (
         <DashboardLayout>

@@ -440,7 +440,7 @@ function PersonRegisterContent() {
                 toast.info("Error, foto não foi enviada!");
                 return;
             }
-            toast.success("Foto enviada com sucesso!");
+            toast.success("Cadastro enviado com sucesso!");
             const resultado = response;
             return resultado;
 

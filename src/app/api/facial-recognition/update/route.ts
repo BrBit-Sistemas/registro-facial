@@ -10,6 +10,7 @@ interface UserInfo {
 }
 
 interface RequestData {
+  ipFacial: string;
   UserID: string;
   Info: UserInfo;
 }
@@ -150,7 +151,8 @@ class DeviceAPIService {
     return responseText;
   }
 
-  async updateFacialData(userId: string, userInfo: UserInfo): Promise<string> {
+  async updateFacialData(ipFacial: string, userId: string, userInfo: UserInfo): Promise<string> {
+    this.deviceBaseUrl = `${ipFacial}`;
     try {
       
       // Modo desenvolvimento - simular se não conseguir conectar
@@ -234,9 +236,9 @@ class DeviceAPIService {
     }
   }
 
-  async checkDeviceStatus(): Promise<boolean> {
+  async checkDeviceStatus(ipFacial: string): Promise<boolean> {
     try {
-      
+      this.deviceBaseUrl = `${ipFacial}`;
       // Modo desenvolvimento
       if (this.deviceBaseUrl.includes('localhost')) {
         return true;
@@ -305,10 +307,6 @@ class BiometricProcessor {
         await this.processPhotoData(userInfo.PhotoData);
       }
 
-      const updateTimestamp = new Date().toISOString();
-      console.log(`Biometric update timestamp: ${updateTimestamp}`);
-      await this.logUpdate(userId, userInfo.UserName);
-
     } catch (error) {
       console.error('Error processing biometric data:', error);
       throw new Error('Failed to process biometric data');
@@ -322,10 +320,6 @@ class BiometricProcessor {
       timestamp: new Date().toISOString(),
       status: 'processed'
     };
-  }
-
-  private async logUpdate(userId: string, userName: string): Promise<void> {
-    console.log(`Biometric update logged - UserID: ${userId}, UserName: ${userName}, Time: ${new Date().toISOString()}`);
   }
 }
 
@@ -346,7 +340,7 @@ export async function POST(request: NextRequest) {
     }
 
     const requestData: RequestData = JSON.parse(jsonData);
-    const { UserID, Info } = requestData;
+    const { ipFacial, UserID, Info } = requestData;
 
     // Validação
     const validation = validationService.validateUserData(UserID, Info);
@@ -362,7 +356,7 @@ export async function POST(request: NextRequest) {
     await biometricProcessor.processBiometricUpdate(UserID, Info);
 
     // Verificar dispositivo
-    const deviceStatus = await deviceAPIService.checkDeviceStatus();
+    const deviceStatus = await deviceAPIService.checkDeviceStatus(ipFacial);
     
     if (!deviceStatus && process.env.NODE_ENV !== 'development') {
       return NextResponse.json(
@@ -372,7 +366,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Chamada para o dispositivo
-    const deviceResponse = await deviceAPIService.updateFacialData(UserID, Info);
+    const deviceResponse = await deviceAPIService.updateFacialData(ipFacial,UserID, Info);
     
     // Resposta de sucesso
     const response = {
@@ -387,18 +381,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(response);
 
   } catch (error) {
-    console.error('❌ Error:', error);
     
     if (process.env.NODE_ENV === 'development') {
-      const simulatedResponse = {
-        status: 'success',
-        message: 'Facial biometric data updated successfully (simulated - development mode)',
-        userID: '16',
-        userName: 'Alexandre16',
-        deviceResponse: "OK",
-        timestamp: new Date().toISOString()
-      };
-      return NextResponse.json(simulatedResponse);
+      
+      return NextResponse.json(
+        { 
+          error: 'Internal server error',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        },
+        { status: 500 }
+      );
     }
     
     return NextResponse.json(
